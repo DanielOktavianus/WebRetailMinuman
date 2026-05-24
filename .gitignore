@@ -1,0 +1,18 @@
+# Dependency directories
+vendor/
+
+# Claude Code local settings
+.claude/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local environment overrides (jika pakai .env)
+.env
+
+# phpMyAdmin export temp
+*.sql.bak

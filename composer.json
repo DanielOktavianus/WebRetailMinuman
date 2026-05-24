@@ -1,0 +1,13 @@
+{
+    "require": {
+        "php": ">=8.0",
+        "ext-mysqli": "*",
+        "ext-gd": "*",
+        "ext-mbstring": "*"
+    },
+    "config": {
+        "platform": {
+            "php": "8.2"
+        }
+    }
+}

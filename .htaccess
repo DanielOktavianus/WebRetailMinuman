@@ -1,0 +1,25 @@
+# Matikan tampilan error PHP ke user
+php_flag display_errors Off
+php_flag display_startup_errors Off
+php_value error_reporting 0
+
+# Sembunyikan versi server
+ServerSignature Off
+
+# Larang akses langsung ke file sensitif
+<FilesMatch "\.(sql|log|md|json|lock)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Izinkan manifest.json diakses (dibutuhkan PWA)
+<Files "manifest.json">
+    Order Allow,Deny
+    Allow from all
+</Files>
+
+# Larang direktori listing
+Options -Indexes
+
+# Default charset
+AddDefaultCharset UTF-8

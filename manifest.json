@@ -1,0 +1,47 @@
+{
+  "name": "Teh Poci Sangka Bulan",
+  "short_name": "Teh Poci",
+  "description": "Sistem manajemen restoran Teh Poci Sangka Bulan",
+  "start_url": "/SKRIPSIS8/dashboard/dashboard.php",
+  "scope": "/SKRIPSIS8/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#667eea",
+  "theme_color": "#667eea",
+  "icons": [
+    {
+      "src": "/SKRIPSIS8/assets/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/SKRIPSIS8/assets/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/SKRIPSIS8/assets/img/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["productivity", "business"],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Buka Dashboard",
+      "url": "/SKRIPSIS8/dashboard/dashboard.php",
+      "icons": [{ "src": "/SKRIPSIS8/assets/img/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Transaksi",
+      "short_name": "Transaksi",
+      "description": "Buat Transaksi Baru",
+      "url": "/SKRIPSIS8/modules/transaksi/transaksi_tambah.php",
+      "icons": [{ "src": "/SKRIPSIS8/assets/img/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}
