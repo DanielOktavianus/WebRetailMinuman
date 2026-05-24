@@ -2,10 +2,13 @@
 /**
  * Application base path configuration.
  *
- * Local XAMPP  : APP_BASE env var tidak di-set → default '/SKRIPSIS8'
- * Railway/prod : Set environment variable APP_BASE='' (string kosong)
+ * Local XAMPP  : tidak ada RAILWAY_ENVIRONMENT → pakai '/SKRIPSIS8'
+ * Railway/prod : RAILWAY_ENVIRONMENT otomatis di-set Railway → pakai ''
  */
 if (!defined('APP_BASE')) {
-    $appBase = getenv('APP_BASE');
-    define('APP_BASE', $appBase !== false ? $appBase : '/SKRIPSIS8');
+    if (getenv('RAILWAY_ENVIRONMENT') !== false || getenv('RAILWAY_SERVICE_NAME') !== false) {
+        define('APP_BASE', '');        // Railway: app di root domain
+    } else {
+        define('APP_BASE', '/SKRIPSIS8'); // Local XAMPP
+    }
 }
