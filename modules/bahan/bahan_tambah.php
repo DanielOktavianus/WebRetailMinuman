@@ -11,19 +11,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($nama_bahan)) {
         $errorMessage = 'Nama bahan harus diisi.';
     } else {
-        $stmt = mysqli_prepare($conn, "INSERT INTO bahan (nama_bahan) VALUES (?)");
-        if (!$stmt) {
-            $errorMessage = 'Prepare gagal: ' . mysqli_error($conn);
+        // Cek duplikat
+        $cek = mysqli_prepare($conn, "SELECT BahanNo FROM bahan WHERE LOWER(nama_bahan) = LOWER(?) LIMIT 1");
+        mysqli_stmt_bind_param($cek, 's', $nama_bahan);
+        mysqli_stmt_execute($cek);
+        mysqli_stmt_store_result($cek);
+        if (mysqli_stmt_num_rows($cek) > 0) {
+            $errorMessage = 'Bahan "' . htmlspecialchars($nama_bahan) . '" sudah ada di daftar.';
         } else {
-            mysqli_stmt_bind_param($stmt, 's', $nama_bahan);
-            if (mysqli_stmt_execute($stmt)) {
-                $successMessage = 'Bahan berhasil ditambahkan.';
-                $_POST = [];
+            $stmt = mysqli_prepare($conn, "INSERT INTO bahan (nama_bahan) VALUES (?)");
+            if (!$stmt) {
+                $errorMessage = 'Prepare gagal: ' . mysqli_error($conn);
             } else {
-                $errorMessage = 'Gagal menyimpan: ' . mysqli_stmt_error($stmt);
+                mysqli_stmt_bind_param($stmt, 's', $nama_bahan);
+                if (mysqli_stmt_execute($stmt)) {
+                    $successMessage = 'Bahan berhasil ditambahkan.';
+                    $_POST = [];
+                } else {
+                    $errorMessage = 'Gagal menyimpan: ' . mysqli_stmt_error($stmt);
+                }
+                mysqli_stmt_close($stmt);
             }
-            mysqli_stmt_close($stmt);
         }
+        mysqli_stmt_close($cek);
     }
 }
 ?>
