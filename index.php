@@ -4,16 +4,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="SKRIPSIS8 - Progressive Web App untuk manajemen bisnis restoran">
+    <meta name="description" content="Teh Poci Sangka Bulan - Progressive Web App untuk manajemen bisnis restoran">
     <meta name="theme-color" content="#667eea">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="SKRIPSIS8">
+    <meta name="apple-mobile-web-app-title" content="Teh Poci Sangka Bulan">
     <link rel="manifest" href="<?php echo $b; ?>/manifest.php">
     <link rel="icon" type="image/svg+xml" href="<?php echo $b; ?>/assets/img/icon-192.svg">
     <link rel="apple-touch-icon" href="<?php echo $b; ?>/assets/img/icon-192.svg">
-    <title>SKRIPSIS8 - Management System</title>
+    <title>Teh Poci Sangka Bulan - Manajemen Restoran</title>
     <link rel="stylesheet" href="<?php echo $b; ?>/assets/css/main.css">
     <style>
         body {
@@ -108,7 +108,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>🚀 SKRIPSIS8</h1>
+        <h1>🍵 Teh Poci Sangka Bulan</h1>
         <p>Progressive Web App untuk Manajemen Bisnis Restoran</p>
 
         <div class="btn-group">
@@ -125,7 +125,7 @@
 
     <!-- PWA Install Banner -->
     <div id="pwa-install-banner">
-        <p>Instal SKRIPSIS8 di perangkat Anda untuk akses lebih cepat!</p>
+        <p>Instal Teh Poci Sangka Bulan di perangkat Anda untuk akses lebih cepat!</p>
         <div>
             <button id="pwa-install-btn">Instal</button>
             <button id="pwa-close-banner" style="background: rgba(255,255,255,0.2); color: white; margin-left: 8px;">Tutup</button>

@@ -112,7 +112,7 @@ $username = getUsername();
 
 <aside class="sidebar" id="sidebar">
 	<div class="brand">
-		Aplikasi
+		Teh Poci Sangka Bulan
 		<div style="font-size: 11px; color: #9ca3af; margin-top: 4px;">
 			<?php echo htmlspecialchars($username) . ' (' . strtoupper($userRole) . ')'; ?>
 		</div>
