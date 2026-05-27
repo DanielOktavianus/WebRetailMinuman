@@ -82,8 +82,7 @@ function getAllowedModules() {
             'users', 'metode_pembayaran', 'voucher', 'transaksi', 'transaksi_detail'
         ],
         'karyawan' => [
-            'dashboard', 'stok', 'resep', 'bahan', 'satuan', 'menu',
-            'varian_menu', 'transaksi', 'transaksi_detail', 'voucher', 'metode_pembayaran'
+            'dashboard', 'transaksi', 'transaksi_detail'
         ]
     ];
 
