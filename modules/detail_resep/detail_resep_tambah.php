@@ -135,7 +135,7 @@ if ($stokResult) while ($r = mysqli_fetch_assoc($stokResult)) $stokArray[] = $r;
                         <div class="alert success"><?php echo $successMessage; ?></div>
                     <?php endif; ?>
                     <?php if ($errorMessage): ?>
-                        <div class="alert error"><?php echo htmlspecialchars($errorMessage); ?></div>
+                        <div class="alert error"><?php echo $errorMessage; ?></div>
                     <?php endif; ?>
 
                     <form method="post" action="">
