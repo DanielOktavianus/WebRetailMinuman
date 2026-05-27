@@ -73,8 +73,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $ukuranNama = htmlspecialchars($ukuranList[$UkuranNo] ?? '');
         if (!empty($duplikatList)) {
-            $errorMessage = 'Bahan berikut sudah ada di resep ini untuk ukuran <strong>' . $ukuranNama . '</strong>: <strong>'
-                . implode(', ', $duplikatList) . '</strong>. Gunakan tombol <strong>Edit</strong> untuk mengubah jumlahnya.';
+            $errorMessage = 'Bahan sudah ada di resep ini untuk ukuran <strong>' . $ukuranNama . '</strong>: '
+                . implode(', ', $duplikatList) . '. Gunakan tombol Edit untuk mengubah jumlahnya.';
         }
         if ($successCount > 0) {
             $successMessage = "{$successCount} bahan berhasil ditambahkan untuk ukuran <strong>{$ukuranNama}</strong>."
