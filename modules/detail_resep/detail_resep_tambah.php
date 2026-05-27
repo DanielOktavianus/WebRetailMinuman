@@ -33,8 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (empty($StokNos)) {
         $errorMessage = 'Minimal harus ada 1 bahan.';
     } else {
-        $successCount = 0;
-        $skipCount    = 0;
+        $successCount  = 0;
+        $skipCount     = 0;
+        $duplikatList  = []; // bahan yang sudah ada
 
         for ($i = 0; $i < count($StokNos); $i++) {
             $StokNo   = isset($StokNos[$i])   && is_numeric($StokNos[$i])   ? (int)   $StokNos[$i]   : null;
@@ -44,10 +45,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($StokNo === null || $SatuanNo === null || $jumlah === null) { $skipCount++; continue; }
 
+            // Cek duplikat: apakah StokNo ini sudah ada untuk ResepNo+UkuranNo yang sama
+            $cekDup = mysqli_prepare($conn,
+                "SELECT b.nama_bahan FROM detail_resep dr
+                 LEFT JOIN stok s  ON dr.StokNo  = s.StokNo
+                 LEFT JOIN bahan b ON s.BahanNo  = b.BahanNo
+                 WHERE dr.ResepNo = ? AND dr.UkuranNo = ? AND dr.StokNo = ? LIMIT 1");
+            mysqli_stmt_bind_param($cekDup, 'iii', $ResepNo, $UkuranNo, $StokNo);
+            mysqli_stmt_execute($cekDup);
+            $dupRow = mysqli_fetch_assoc(mysqli_stmt_get_result($cekDup));
+            mysqli_stmt_close($cekDup);
+
+            if ($dupRow) {
+                $duplikatList[] = htmlspecialchars($dupRow['nama_bahan'] ?? 'Bahan #' . $StokNo);
+                $skipCount++;
+                continue;
+            }
+
             $stmt = mysqli_prepare($conn,
                 "INSERT INTO detail_resep (ResepNo, UkuranNo, StokNo, SatuanNo, jumlah)
-                 VALUES (?, ?, ?, ?, ?)
-                 ON DUPLICATE KEY UPDATE SatuanNo = VALUES(SatuanNo), jumlah = VALUES(jumlah)");
+                 VALUES (?, ?, ?, ?, ?)");
             if (!$stmt) { $skipCount++; continue; }
             mysqli_stmt_bind_param($stmt, 'iiiid', $ResepNo, $UkuranNo, $StokNo, $SatuanNo, $jumlah);
             mysqli_stmt_execute($stmt) ? $successCount++ : $skipCount++;
@@ -55,12 +72,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $ukuranNama = htmlspecialchars($ukuranList[$UkuranNo] ?? '');
+        if (!empty($duplikatList)) {
+            $errorMessage = 'Bahan berikut sudah ada di resep ini untuk ukuran <strong>' . $ukuranNama . '</strong>: <strong>'
+                . implode(', ', $duplikatList) . '</strong>. Gunakan tombol <strong>Edit</strong> untuk mengubah jumlahnya.';
+        }
         if ($successCount > 0) {
-            $successMessage = "{$successCount} bahan berhasil disimpan untuk ukuran <strong>{$ukuranNama}</strong>."
-                . ($skipCount > 0 ? " ({$skipCount} baris dilewati)" : '');
-            $selectedUkuranNo = $UkuranNo; // tetap pilih ukuran yang sama
+            $successMessage = "{$successCount} bahan berhasil ditambahkan untuk ukuran <strong>{$ukuranNama}</strong>."
+                . ($skipCount > 0 && empty($duplikatList) ? " ({$skipCount} baris dilewati)" : '');
+            $selectedUkuranNo = $UkuranNo;
             $_POST = [];
-        } else {
+        } elseif (empty($duplikatList)) {
             $errorMessage = 'Tidak ada data tersimpan. Pastikan bahan dan jumlah diisi dengan benar.';
         }
     }
