@@ -258,6 +258,74 @@ if ($stokResult) while ($r = mysqli_fetch_assoc($stokResult)) $stokArray[] = $r;
                     </script>
                 </div>
 
+                <!-- ── STATUS KESIAPAN BAHAN PER UKURAN ── -->
+                <?php if ($selectedResepNo):
+                    $stmtStatus = mysqli_prepare($conn,
+                        "SELECT u.UkuranNo, u.nama_ukuran,
+                                (SELECT COUNT(*) FROM detail_resep dr
+                                 WHERE dr.ResepNo = ? AND dr.UkuranNo = u.UkuranNo) AS jml_bahan
+                         FROM varian_menu vm
+                         LEFT JOIN ukuran u ON vm.ukuranNo = u.UkuranNo
+                         LEFT JOIN resep r  ON vm.MenuNo   = r.MenuNo
+                         WHERE r.ResepNo = ?
+                         GROUP BY u.UkuranNo, u.nama_ukuran
+                         ORDER BY u.UkuranNo ASC");
+                    mysqli_stmt_bind_param($stmtStatus, 'ii', $selectedResepNo, $selectedResepNo);
+                    mysqli_stmt_execute($stmtStatus);
+                    $statusRes = mysqli_stmt_get_result($stmtStatus);
+                    $statusRows = [];
+                    while ($sr = mysqli_fetch_assoc($statusRes)) $statusRows[] = $sr;
+                    mysqli_stmt_close($stmtStatus);
+
+                    if (!empty($statusRows)):
+                ?>
+                <div class="card" style="margin-top:18px;padding:16px">
+                    <h3 style="margin:0 0 12px;font-size:15px;color:#374151">📋 Status Kesiapan Bahan per Ukuran</h3>
+                    <div style="display:flex;flex-wrap:wrap;gap:10px">
+                        <?php foreach ($statusRows as $sr):
+                            $namaUkuran = htmlspecialchars($sr['nama_ukuran'] ?? '-');
+                            $jml        = (int) $sr['jml_bahan'];
+                            $ukNo       = (int) $sr['UkuranNo'];
+                            if ($jml > 0): ?>
+                                <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;
+                                            background:#d1fae5;border:1px solid #6ee7b7;border-radius:8px">
+                                    <span style="font-size:18px">✅</span>
+                                    <div>
+                                        <div style="font-weight:700;color:#065f46"><?php echo $namaUkuran; ?></div>
+                                        <div style="font-size:12px;color:#047857"><?php echo $jml; ?> bahan sudah diisi</div>
+                                    </div>
+                                </div>
+                            <?php else: ?>
+                                <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;
+                                            background:#fee2e2;border:1px solid #fca5a5;border-radius:8px">
+                                    <span style="font-size:18px">❌</span>
+                                    <div>
+                                        <div style="font-weight:700;color:#991b1b"><?php echo $namaUkuran; ?></div>
+                                        <div style="font-size:12px">
+                                            <a href="?ResepNo=<?php echo $selectedResepNo; ?>"
+                                               onclick="document.getElementById('UkuranNo').value='<?php echo $ukNo; ?>'; return false;"
+                                               style="color:#dc2626;text-decoration:underline;cursor:pointer"
+                                               id="isi-ukuran-<?php echo $ukNo; ?>">
+                                               Belum ada bahan — Pilih ukuran ini ↑
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <script>
+                                document.getElementById('isi-ukuran-<?php echo $ukNo; ?>').addEventListener('click', function(e) {
+                                    e.preventDefault();
+                                    document.getElementById('UkuranNo').value = '<?php echo $ukNo; ?>';
+                                    document.getElementById('UkuranNo').scrollIntoView({behavior:'smooth', block:'center'});
+                                    document.getElementById('UkuranNo').style.outline = '2px solid #ef4444';
+                                    setTimeout(() => document.getElementById('UkuranNo').style.outline = '', 2000);
+                                });
+                                </script>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <?php endif; endif; ?>
+
                 <!-- ── DAFTAR BAHAN TERSIMPAN ── -->
                 <div class="card" style="margin-top:18px">
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
