@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: Times New Roman, serif; font-size: 12pt; margin: 2cm; }
+  h1 { text-align: center; font-size: 14pt; }
+  h2 { text-align: center; font-size: 12pt; font-weight: normal; }
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  th, td { border: 1px solid black; padding: 6px 8px; vertical-align: top; font-size: 11pt; }
+  th { background-color: #d9d9d9; text-align: center; font-weight: bold; }
+  td:first-child { text-align: center; width: 4%; }
+  td:nth-child(2) { width: 12%; }
+  td:nth-child(3) { width: 27%; }
+  td:nth-child(4) { width: 35%; }
+  td:nth-child(5) { width: 12%; text-align: center; }
+  .hasil-col { width: 80px; height: 40px; }
+</style>
+</head>
+<body>
+
+<h1>TABEL PENGUJIAN BLACK BOX TESTING</h1>
+<h2>Sistem Manajemen Restoran Teh Poci Sangka Bulan</h2>
+<h2>Hak Akses: Admin</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>No</th>
+      <th>Halaman</th>
+      <th>Skenario Pengujian</th>
+      <th>Hasil yang Diharapkan</th>
+      <th>Hasil Pengujian</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    <!-- LOGIN -->
+    <tr><td>1</td><td rowspan="4">Login</td><td>Mengisi username dan password yang valid (admin/admin) lalu klik Masuk</td><td>Sistem berhasil login dan menampilkan halaman Dashboard</td><td class="hasil-col"></td></tr>
+    <tr><td>2</td><td>Mengisi username yang salah dan password yang benar lalu klik Masuk</td><td>Sistem menampilkan pesan "Login gagal, silakan ulangi"</td><td class="hasil-col"></td></tr>
+    <tr><td>3</td><td>Mengisi username yang benar dan password yang salah lalu klik Masuk</td><td>Sistem menampilkan pesan "Login gagal, silakan ulangi"</td><td class="hasil-col"></td></tr>
+    <tr><td>4</td><td>Mengosongkan field username dan password lalu klik Masuk</td><td>Sistem menampilkan validasi browser bahwa field wajib diisi</td><td class="hasil-col"></td></tr>
+
+    <!-- DASHBOARD -->
+    <tr><td>5</td><td rowspan="4">Dashboard</td><td>Membuka halaman Dashboard setelah login sebagai admin</td><td>Sistem menampilkan KPI: total penjualan, jumlah transaksi, stok rendah, dan menu terjual</td><td class="hasil-col"></td></tr>
+    <tr><td>6</td><td>Melakukan filter penjualan dengan memilih "Hari Ini"</td><td>Sistem menampilkan data penjualan pada hari yang sama</td><td class="hasil-col"></td></tr>
+    <tr><td>7</td><td>Melakukan filter penjualan dengan memilih "7 Hari Terakhir"</td><td>Sistem menampilkan data penjualan 7 hari ke belakang</td><td class="hasil-col"></td></tr>
+    <tr><td>8</td><td>Melakukan filter penjualan dengan memilih "Tahun Ini"</td><td>Sistem menampilkan data penjualan sepanjang tahun berjalan</td><td class="hasil-col"></td></tr>
+
+    <!-- MENU -->
+    <tr><td>9</td><td rowspan="5">Menu</td><td>Mengisi nama menu baru yang valid lalu klik Simpan</td><td>Sistem berhasil menyimpan menu baru dan menampilkan data di daftar menu</td><td class="hasil-col"></td></tr>
+    <tr><td>10</td><td>Mengosongkan field nama menu lalu klik Simpan</td><td>Sistem menampilkan validasi bahwa nama menu wajib diisi</td><td class="hasil-col"></td></tr>
+    <tr><td>11</td><td>Mengisi nama menu yang sudah ada (duplikat)</td><td>Sistem menampilkan pesan bahwa menu sudah ada</td><td class="hasil-col"></td></tr>
+    <tr><td>12</td><td>Mengklik tombol Edit pada salah satu menu dan mengubah nama</td><td>Sistem berhasil memperbarui nama menu di daftar</td><td class="hasil-col"></td></tr>
+    <tr><td>13</td><td>Mengklik tombol Hapus pada salah satu menu lalu konfirmasi</td><td>Sistem berhasil menghapus menu beserta varian dan resep terkait</td><td class="hasil-col"></td></tr>
+
+    <!-- VARIAN MENU -->
+    <tr><td>14</td><td rowspan="5">Varian Menu</td><td>Memilih menu dan ukuran yang valid, mengisi harga, lalu klik Simpan</td><td>Sistem berhasil menyimpan varian menu baru di daftar</td><td class="hasil-col"></td></tr>
+    <tr><td>15</td><td>Mengosongkan field harga lalu klik Simpan</td><td>Sistem menampilkan validasi bahwa harga wajib diisi</td><td class="hasil-col"></td></tr>
+    <tr><td>16</td><td>Menginputkan kombinasi menu dan ukuran yang sudah ada</td><td>Sistem menampilkan pesan duplikat dan menyarankan tombol Edit</td><td class="hasil-col"></td></tr>
+    <tr><td>17</td><td>Mengklik tombol Edit pada varian dan mengubah harga</td><td>Sistem berhasil memperbarui harga varian menu</td><td class="hasil-col"></td></tr>
+    <tr><td>18</td><td>Mengklik tombol Hapus pada varian lalu konfirmasi</td><td>Sistem berhasil menghapus varian menu</td><td class="hasil-col"></td></tr>
+
+    <!-- RESEP -->
+    <tr><td>19</td><td rowspan="5">Resep</td><td>Memilih menu yang belum punya resep, mengisi keterangan, lalu klik Simpan</td><td>Sistem berhasil menyimpan resep dan menampilkan link "Isi Bahan Sekarang"</td><td class="hasil-col"></td></tr>
+    <tr><td>20</td><td>Mengosongkan field keterangan lalu klik Simpan</td><td>Sistem menampilkan validasi bahwa keterangan wajib diisi</td><td class="hasil-col"></td></tr>
+    <tr><td>21</td><td>Memilih menu yang sudah memiliki resep</td><td>Sistem menampilkan pesan bahwa menu sudah punya resep beserta link Edit</td><td class="hasil-col"></td></tr>
+    <tr><td>22</td><td>Mengklik tombol Edit pada resep dan mengubah keterangan</td><td>Sistem berhasil memperbarui keterangan resep</td><td class="hasil-col"></td></tr>
+    <tr><td>23</td><td>Mengklik tombol Hapus pada resep lalu konfirmasi</td><td>Sistem berhasil menghapus resep beserta detail bahan terkait</td><td class="hasil-col"></td></tr>
+
+    <!-- DETAIL RESEP -->
+    <tr><td>24</td><td rowspan="5">Detail Resep</td><td>Memilih resep, ukuran, bahan (stok), mengisi jumlah valid lalu klik Simpan</td><td>Sistem berhasil menyimpan detail bahan untuk resep dan ukuran tersebut</td><td class="hasil-col"></td></tr>
+    <tr><td>25</td><td>Mengosongkan field jumlah lalu klik Simpan</td><td>Sistem menampilkan validasi bahwa jumlah wajib diisi</td><td class="hasil-col"></td></tr>
+    <tr><td>26</td><td>Menginputkan bahan yang sama untuk resep dan ukuran yang sama</td><td>Sistem menampilkan pesan duplikat bahan pada resep tersebut</td><td class="hasil-col"></td></tr>
+    <tr><td>27</td><td>Memilih bahan dari stok dan memeriksa satuan yang muncul</td><td>Satuan otomatis terkunci sesuai satuan yang diset di stok</td><td class="hasil-col"></td></tr>
+    <tr><td>28</td><td>Mengklik tombol Hapus pada detail bahan lalu konfirmasi</td><td>Sistem berhasil menghapus bahan dari resep</td><td class="hasil-col"></td></tr>
+
+    <!-- SATUAN -->
+    <tr><td>29</td><td rowspan="4">Satuan</td><td>Mengisi nama satuan baru yang valid lalu klik Simpan</td><td>Sistem berhasil menyimpan satuan baru dan menampilkan di daftar</td><td class="hasil-col"></td></tr>
+    <tr><td>30</td><td>Mengosongkan field nama satuan lalu klik Simpan</td><td>Sistem menampilkan validasi bahwa nama satuan wajib diisi</td><td class="hasil-col"></td></tr>
+    <tr><td>31</td><td>Mengklik tombol Edit pada satuan dan mengubah nama</td><td>Sistem berhasil memperbarui nama satuan</td><td class="hasil-col"></td></tr>
+    <tr><td>32</td><td>Mengklik tombol Hapus pada satuan lalu konfirmasi</td><td>Sistem berhasil menghapus satuan dari daftar</td><td class="hasil-col"></td></tr>
+
+    <!-- BAHAN -->
+    <tr><td>33</td><td rowspan="4">Bahan</td><td>Mengisi nama bahan baru yang valid lalu klik Simpan</td><td>Sistem berhasil menyimpan bahan baru dan menampilkan di daftar</td><td class="hasil-col"></td></tr>
+    <tr><td>34</td><td>Mengosongkan field nama bahan lalu klik Simpan</td><td>Sistem menampilkan validasi bahwa nama bahan wajib diisi</td><td class="hasil-col"></td></tr>
+    <tr><td>35</td><td>Mengklik tombol Edit pada bahan dan mengubah nama</td><td>Sistem berhasil memperbarui nama bahan</td><td class="hasil-col"></td></tr>
+    <tr><td>36</td><td>Mengklik tombol Hapus pada bahan lalu konfirmasi</td><td>Sistem berhasil menghapus bahan dari daftar</td><td class="hasil-col"></td></tr>
+
+    <!-- PRODUSEN -->
+    <tr><td>37</td><td rowspan="4">Produsen</td><td>Mengisi nama produsen, alamat, dan kontak yang valid lalu klik Simpan</td><td>Sistem berhasil menyimpan produsen baru dan menampilkan di daftar</td><td class="hasil-col"></td></tr>
+    <tr><td>38</td><td>Mengosongkan field nama produsen lalu klik Simpan</td><td>Sistem menampilkan validasi bahwa nama produsen wajib diisi</td><td class="hasil-col"></td></tr>
+    <tr><td>39</td><td>Mengklik tombol Edit pada produsen dan mengubah data</td><td>Sistem berhasil memperbarui data produsen</td><td class="hasil-col"></td></tr>
+    <tr><td>40</td><td>Mengklik tombol Hapus pada produsen lalu konfirmasi</td><td>Sistem berhasil menghapus produsen dari daftar</td><td class="hasil-col"></td></tr>
+
+    <!-- STOK -->
+    <tr><td>41</td><td rowspan="6">Stok</td><td>Memilih bahan baru, satuan, mengisi jumlah stok dan batas minimum lalu klik Simpan</td><td>Sistem berhasil menyimpan stok baru dan menampilkan status stok (AMAN/RENDAH/HABIS)</td><td class="hasil-col"></td></tr>
+    <tr><td>42</td><td>Menginputkan bahan yang sudah ada di stok</td><td>Sistem menampilkan pesan duplikat dan menyarankan tombol Restock</td><td class="hasil-col"></td></tr>
+    <tr><td>43</td><td>Mengosongkan field jumlah stok lalu klik Simpan</td><td>Sistem menampilkan validasi bahwa jumlah stok wajib diisi</td><td class="hasil-col"></td></tr>
+    <tr><td>44</td><td>Mengklik tombol Restock dan menambah jumlah stok</td><td>Sistem berhasil menambah jumlah stok dan memperbarui status</td><td class="hasil-col"></td></tr>
+    <tr><td>45</td><td>Mengklik tombol Edit pada stok dan mengubah batas minimum</td><td>Sistem berhasil memperbarui batas minimum stok</td><td class="hasil-col"></td></tr>
+    <tr><td>46</td><td>Mengklik tombol Hapus pada stok lalu konfirmasi</td><td>Sistem berhasil menghapus data stok</td><td class="hasil-col"></td></tr>
+
+    <!-- TRANSAKSI -->
+    <tr><td>47</td><td rowspan="6">Transaksi</td><td>Memilih menu yang lengkap (ada resep & bahan), mengisi jumlah, memilih metode pembayaran lalu klik Simpan</td><td>Sistem berhasil menyimpan transaksi dan mengurangi stok bahan sesuai resep</td><td class="hasil-col"></td></tr>
+    <tr><td>48</td><td>Memilih menu yang belum memiliki resep atau bahan lalu klik Simpan</td><td>Sistem menampilkan pesan error bahwa resep/bahan belum lengkap</td><td class="hasil-col"></td></tr>
+    <tr><td>49</td><td>Mengosongkan field jumlah item lalu klik Simpan</td><td>Sistem menampilkan validasi bahwa jumlah wajib diisi</td><td class="hasil-col"></td></tr>
+    <tr><td>50</td><td>Menerapkan voucher diskon pada transaksi</td><td>Sistem menghitung dan menampilkan total harga setelah diskon voucher</td><td class="hasil-col"></td></tr>
+    <tr><td>51</td><td>Mengklik tombol Detail pada transaksi</td><td>Sistem menampilkan detail item transaksi beserta harga satuan dan total</td><td class="hasil-col"></td></tr>
+    <tr><td>52</td><td>Mengklik tombol Hapus pada transaksi lalu konfirmasi</td><td>Sistem berhasil menghapus transaksi dan detail terkait</td><td class="hasil-col"></td></tr>
+
+    <!-- DETAIL TRANSAKSI -->
+    <tr><td>53</td><td rowspan="3">Detail Transaksi</td><td>Membuka halaman Detail Transaksi</td><td>Sistem menampilkan daftar seluruh transaksi yang telah disimpan</td><td class="hasil-col"></td></tr>
+    <tr><td>54</td><td>Mengklik tombol Detail pada salah satu transaksi</td><td>Sistem menampilkan rincian item transaksi beserta harga satuan dan total</td><td class="hasil-col"></td></tr>
+    <tr><td>55</td><td>Mengklik tombol Hapus pada salah satu transaksi di halaman Detail Transaksi lalu konfirmasi</td><td>Sistem berhasil menghapus transaksi beserta seluruh detail terkait</td><td class="hasil-col"></td></tr>
+
+    <!-- VOUCHER -->
+    <tr><td>56</td><td rowspan="4">Voucher</td><td>Mengisi nama voucher dan nilai diskon yang valid lalu klik Simpan</td><td>Sistem berhasil menyimpan voucher baru dan menampilkan di daftar</td><td class="hasil-col"></td></tr>
+    <tr><td>57</td><td>Mengosongkan field nama voucher lalu klik Simpan</td><td>Sistem menampilkan validasi bahwa nama voucher wajib diisi</td><td class="hasil-col"></td></tr>
+    <tr><td>58</td><td>Mengklik tombol Edit pada voucher dan mengubah nilai diskon</td><td>Sistem berhasil memperbarui nilai diskon voucher</td><td class="hasil-col"></td></tr>
+    <tr><td>59</td><td>Mengklik tombol Hapus pada voucher lalu konfirmasi</td><td>Sistem berhasil menghapus voucher dari daftar</td><td class="hasil-col"></td></tr>
+
+    <!-- METODE PEMBAYARAN -->
+    <tr><td>60</td><td rowspan="4">Metode Pembayaran</td><td>Mengisi nama metode pembayaran baru yang valid lalu klik Simpan</td><td>Sistem berhasil menyimpan metode pembayaran baru di daftar</td><td class="hasil-col"></td></tr>
+    <tr><td>61</td><td>Mengosongkan field nama metode lalu klik Simpan</td><td>Sistem menampilkan validasi bahwa nama metode wajib diisi</td><td class="hasil-col"></td></tr>
+    <tr><td>62</td><td>Mengklik tombol Edit pada metode pembayaran dan mengubah nama</td><td>Sistem berhasil memperbarui nama metode pembayaran</td><td class="hasil-col"></td></tr>
+    <tr><td>63</td><td>Mengklik tombol Hapus pada metode pembayaran lalu konfirmasi</td><td>Sistem berhasil menghapus metode pembayaran</td><td class="hasil-col"></td></tr>
+
+    <!-- USER MANAGEMENT -->
+    <tr><td>64</td><td rowspan="5">User Management</td><td>Mengisi username, password, dan role (admin/karyawan) yang valid lalu klik Simpan</td><td>Sistem berhasil menyimpan user baru dan menampilkan di daftar</td><td class="hasil-col"></td></tr>
+    <tr><td>65</td><td>Mengosongkan field username lalu klik Simpan</td><td>Sistem menampilkan validasi bahwa username wajib diisi</td><td class="hasil-col"></td></tr>
+    <tr><td>66</td><td>Mengisi username yang sudah terdaftar</td><td>Sistem menampilkan pesan bahwa username sudah digunakan</td><td class="hasil-col"></td></tr>
+    <tr><td>67</td><td>Mengklik tombol Edit pada user dan mengubah role</td><td>Sistem berhasil memperbarui role user</td><td class="hasil-col"></td></tr>
+    <tr><td>68</td><td>Mengklik tombol Hapus pada user lalu konfirmasi</td><td>Sistem berhasil menghapus user dari daftar</td><td class="hasil-col"></td></tr>
+
+    <!-- KARYAWAN -->
+    <tr><td>69</td><td rowspan="4">Karyawan</td><td>Mengisi nama dan kontak karyawan yang valid lalu klik Simpan</td><td>Sistem berhasil menyimpan data karyawan baru di daftar</td><td class="hasil-col"></td></tr>
+    <tr><td>70</td><td>Mengosongkan field nama karyawan lalu klik Simpan</td><td>Sistem menampilkan validasi bahwa nama karyawan wajib diisi</td><td class="hasil-col"></td></tr>
+    <tr><td>71</td><td>Mengklik tombol Edit pada karyawan dan mengubah kontak</td><td>Sistem berhasil memperbarui data kontak karyawan</td><td class="hasil-col"></td></tr>
+    <tr><td>72</td><td>Mengklik tombol Hapus pada karyawan lalu konfirmasi</td><td>Sistem berhasil menghapus data karyawan</td><td class="hasil-col"></td></tr>
+
+    <!-- LOGOUT -->
+    <tr><td>73</td><td>Logout</td><td>Mengklik tombol Logout pada sidebar</td><td>Sistem mengakhiri sesi dan mengarahkan kembali ke halaman Login</td><td class="hasil-col"></td></tr>
+
+  </tbody>
+</table>
+
+</body>
+</html>

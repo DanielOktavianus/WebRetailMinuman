@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: Times New Roman, serif; font-size: 12pt; margin: 2cm; }
+  h1 { text-align: center; font-size: 14pt; }
+  h2 { text-align: center; font-size: 12pt; font-weight: normal; }
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  th, td { border: 1px solid black; padding: 6px 8px; vertical-align: top; font-size: 11pt; }
+  th { background-color: #d9d9d9; text-align: center; font-weight: bold; }
+  td:first-child { text-align: center; width: 4%; }
+  td:nth-child(2) { width: 14%; }
+  td:nth-child(3) { width: 27%; }
+  td:nth-child(4) { width: 35%; }
+  td:nth-child(5) { width: 12%; text-align: center; }
+  .hasil-col { width: 80px; height: 40px; }
+</style>
+</head>
+<body>
+
+<h1>TABEL PENGUJIAN BLACK BOX TESTING</h1>
+<h2>Sistem Manajemen Restoran Teh Poci Sangka Bulan</h2>
+<h2>Hak Akses: Karyawan</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>No</th>
+      <th>Halaman</th>
+      <th>Skenario Pengujian</th>
+      <th>Hasil yang Diharapkan</th>
+      <th>Hasil Pengujian</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    <!-- LOGIN -->
+    <tr><td>1</td><td rowspan="4">Login</td><td>Mengisi username dan password yang valid sebagai karyawan lalu klik Masuk</td><td>Sistem berhasil login dan menampilkan halaman Dashboard. Sidebar hanya menampilkan menu Dashboard, Transaksi, dan Detail Transaksi</td><td class="hasil-col"></td></tr>
+    <tr><td>2</td><td>Mengisi username yang salah dan password yang benar lalu klik Masuk</td><td>Sistem menampilkan pesan "Login gagal, silakan ulangi"</td><td class="hasil-col"></td></tr>
+    <tr><td>3</td><td>Mengisi username yang benar dan password yang salah lalu klik Masuk</td><td>Sistem menampilkan pesan "Login gagal, silakan ulangi"</td><td class="hasil-col"></td></tr>
+    <tr><td>4</td><td>Mengosongkan field username dan password lalu klik Masuk</td><td>Sistem menampilkan validasi browser bahwa field wajib diisi</td><td class="hasil-col"></td></tr>
+
+    <!-- DASHBOARD -->
+    <tr><td>5</td><td rowspan="3">Dashboard</td><td>Membuka halaman Dashboard setelah login sebagai karyawan</td><td>Sistem menampilkan KPI: total penjualan, jumlah transaksi, stok rendah, dan menu terjual</td><td class="hasil-col"></td></tr>
+    <tr><td>6</td><td>Melakukan filter penjualan dengan memilih "Hari Ini"</td><td>Sistem menampilkan data penjualan pada hari yang sama</td><td class="hasil-col"></td></tr>
+    <tr><td>7</td><td>Melakukan filter penjualan dengan memilih "7 Hari Terakhir"</td><td>Sistem menampilkan data penjualan 7 hari ke belakang</td><td class="hasil-col"></td></tr>
+
+    <!-- TRANSAKSI -->
+    <tr><td>8</td><td rowspan="6">Transaksi</td><td>Memilih menu yang lengkap (ada resep &amp; bahan), mengisi jumlah, memilih metode pembayaran lalu klik Simpan</td><td>Sistem berhasil menyimpan transaksi dan mengurangi stok bahan sesuai resep</td><td class="hasil-col"></td></tr>
+    <tr><td>9</td><td>Memilih menu yang belum memiliki resep atau bahan lalu klik Simpan</td><td>Sistem menampilkan pesan error bahwa resep/bahan belum lengkap</td><td class="hasil-col"></td></tr>
+    <tr><td>10</td><td>Mengosongkan field jumlah item lalu klik Simpan</td><td>Sistem menampilkan validasi bahwa jumlah wajib diisi</td><td class="hasil-col"></td></tr>
+    <tr><td>11</td><td>Menerapkan voucher diskon pada transaksi</td><td>Sistem menghitung dan menampilkan total harga setelah diskon voucher</td><td class="hasil-col"></td></tr>
+    <tr><td>12</td><td>Mengklik tombol Detail pada transaksi</td><td>Sistem menampilkan detail item transaksi beserta harga satuan dan total</td><td class="hasil-col"></td></tr>
+    <tr><td>13</td><td>Mengklik tombol Hapus pada transaksi lalu konfirmasi</td><td>Sistem berhasil menghapus transaksi dan detail terkait</td><td class="hasil-col"></td></tr>
+
+    <!-- DETAIL TRANSAKSI -->
+    <tr><td>14</td><td rowspan="3">Detail Transaksi</td><td>Membuka halaman Detail Transaksi</td><td>Sistem menampilkan daftar seluruh transaksi yang telah disimpan</td><td class="hasil-col"></td></tr>
+    <tr><td>15</td><td>Mengklik tombol Detail pada salah satu transaksi</td><td>Sistem menampilkan rincian item transaksi beserta harga satuan dan total</td><td class="hasil-col"></td></tr>
+    <tr><td>16</td><td>Mengklik tombol Hapus pada salah satu transaksi di halaman Detail Transaksi lalu konfirmasi</td><td>Sistem berhasil menghapus transaksi beserta seluruh detail terkait</td><td class="hasil-col"></td></tr>
+
+    <!-- AKSES TERLARANG -->
+    <tr><td>17</td><td rowspan="8">Akses Terlarang</td><td>Mengakses halaman Menu secara langsung melalui URL (/modules/menu/menu_tambah.php)</td><td>Sistem menolak akses dan menampilkan pesan "Access Denied: Anda tidak memiliki akses ke halaman ini"</td><td class="hasil-col"></td></tr>
+    <tr><td>18</td><td>Mengakses halaman Resep secara langsung melalui URL (/modules/resep/resep_tambah.php)</td><td>Sistem menolak akses dan menampilkan pesan "Access Denied: Anda tidak memiliki akses ke halaman ini"</td><td class="hasil-col"></td></tr>
+    <tr><td>19</td><td>Mengakses halaman Detail Resep secara langsung melalui URL (/modules/detail_resep/detail_resep_tambah.php)</td><td>Sistem menolak akses dan menampilkan pesan "Access Denied: Anda tidak memiliki akses ke halaman ini"</td><td class="hasil-col"></td></tr>
+    <tr><td>20</td><td>Mengakses halaman Stok secara langsung melalui URL (/modules/stok/stok_tambah.php)</td><td>Sistem menolak akses dan menampilkan pesan "Access Denied: Anda tidak memiliki akses ke halaman ini"</td><td class="hasil-col"></td></tr>
+    <tr><td>21</td><td>Mengakses halaman Voucher secara langsung melalui URL (/modules/voucher/voucher_tambah.php)</td><td>Sistem menolak akses dan menampilkan pesan "Access Denied: Anda tidak memiliki akses ke halaman ini"</td><td class="hasil-col"></td></tr>
+    <tr><td>22</td><td>Mengakses halaman Metode Pembayaran secara langsung melalui URL (/modules/metode_pembayaran/metode_tambah.php)</td><td>Sistem menolak akses dan menampilkan pesan "Access Denied: Anda tidak memiliki akses ke halaman ini"</td><td class="hasil-col"></td></tr>
+    <tr><td>23</td><td>Mengakses halaman User Management secara langsung melalui URL (/modules/users/user_tambah.php)</td><td>Sistem menolak akses dan menampilkan pesan "Access Denied: Anda tidak memiliki akses ke halaman ini"</td><td class="hasil-col"></td></tr>
+    <tr><td>24</td><td>Mengakses halaman Karyawan secara langsung melalui URL (/modules/karyawan/karyawan_tambah.php)</td><td>Sistem menolak akses dan menampilkan pesan "Access Denied: Anda tidak memiliki akses ke halaman ini"</td><td class="hasil-col"></td></tr>
+
+    <!-- LOGOUT -->
+    <tr><td>25</td><td>Logout</td><td>Mengklik tombol Logout pada sidebar</td><td>Sistem mengakhiri sesi dan mengarahkan kembali ke halaman Login</td><td class="hasil-col"></td></tr>
+
+  </tbody>
+</table>
+
+</body>
+</html>

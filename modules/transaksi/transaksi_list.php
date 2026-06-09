@@ -12,6 +12,19 @@ require_once __DIR__ . '/../../helpers/format_helper.php';
 	<link rel="stylesheet" href="../../assets/css/main.css">
 	<link rel="stylesheet" href="../../assets/css/components.css">
 	<link rel="stylesheet" href="../../assets/css/modules.css">
+	<style>
+		.print-only { display: none; }
+		@media print {
+			html, body { background: white !important; min-height: 0 !important; }
+			.sidebar, .hamburger-btn, .sidebar-overlay, .no-print { display: none !important; width: 0 !important; }
+			.app-layout { display: block !important; background: white !important; }
+			.main-content { display: block !important; margin: 0 !important; padding: 8px !important; width: 100% !important; max-width: 100% !important; background: white !important; }
+			.container { max-width: 100% !important; padding: 0 !important; }
+			.card { box-shadow: none !important; border: none !important; padding: 4px 0 !important; }
+			.print-only { display: block !important; }
+			* { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+		}
+	</style>
 </head>
 <body>
 	<div class="app-layout">
@@ -19,7 +32,14 @@ require_once __DIR__ . '/../../helpers/format_helper.php';
 		<main class="main-content module-transaksi">
 			<div class="container">
 				<div class="card">
-					<h2>Rekapan Detail Transaksi</h2>
+					<!-- Header cetak — hanya muncul saat print -->
+					<div class="print-only" style="text-align:center;padding:12px 0 16px;border-bottom:2px solid #e5e7eb;margin-bottom:16px">
+						<strong style="display:block;font-size:20px;color:#1f2937">Teh Poci Sangka Bulan</strong>
+						<span style="font-size:13px;color:#6b7280">Jl. Sagan No.3 Terban, Gondokusuman, Kota Yogyakarta</span>
+						<p style="margin:6px 0 0;font-size:14px;font-weight:600">Rekapan Transaksi</p>
+					</div>
+
+					<h2 class="no-print">Rekapan Detail Transaksi</h2>
 					<?php
 					// Display success/error messages
 					if (isset($_GET['success']) && $_GET['success'] === 'deleted') {
@@ -83,7 +103,7 @@ require_once __DIR__ . '/../../helpers/format_helper.php';
 						'3bulan' => '3 Bulan Terakhir',
 						'tahun'  => 'Tahun Ini',
 					];
-					echo '<div style="margin-bottom:14px;display:flex;flex-wrap:wrap;align-items:center;gap:4px">';
+					echo '<div class="no-print" style="margin-bottom:14px;display:flex;flex-wrap:wrap;align-items:center;gap:4px">';
 					foreach ($filters as $key => $label) {
 						$style = ($filter === $key) ? $btnActive : $btnInact;
 						echo "<a href=\"?filter={$key}\" style=\"{$style}\">{$label}</a>";
@@ -92,7 +112,7 @@ require_once __DIR__ . '/../../helpers/format_helper.php';
 
 					// Form custom range
 					$customOpen = ($filter === 'custom') ? '' : 'style="display:none"';
-					echo '<form method="get" action="" id="customForm" ' . $customOpen . ' style="background:#f9fafb;padding:12px;border-radius:8px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">';
+					echo '<form method="get" action="" id="customForm" class="no-print" ' . $customOpen . ' style="background:#f9fafb;padding:12px;border-radius:8px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">';
 					echo '<input type="hidden" name="filter" value="custom">';
 					echo '<div><label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">Dari Tanggal</label>';
 					echo '<input type="date" name="dari" value="' . htmlspecialchars($dari) . '" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px"></div>';
@@ -103,7 +123,7 @@ require_once __DIR__ . '/../../helpers/format_helper.php';
 
 					// Tombol Pilih Rentang Kustom (toggle form)
 					$toggleStyle = ($filter === 'custom') ? $btnActive : $btnInact;
-					echo '<div style="margin-bottom:14px">';
+					echo '<div class="no-print" style="margin-bottom:14px">';
 					echo '<button onclick="toggleCustomForm()" style="' . $toggleStyle . '">📅 Rentang Kustom</button>';
 					if ($filterLabel && $filter !== 'semua') {
 						echo '<span style="font-size:13px;color:#6b7280;margin-left:8px">Menampilkan: <strong>' . htmlspecialchars($filterLabel) . '</strong></span>';
@@ -136,9 +156,58 @@ require_once __DIR__ . '/../../helpers/format_helper.php';
 						case 'custom':  $rangeInfo = $dari . ' – ' . $sampai; break;
 						default:        $rangeInfo = 'Semua data';
 					}
-					echo '<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#0369a1">';
-					echo '📊 Menampilkan <strong>' . $totalRows . ' transaksi</strong>';
-					echo ' &nbsp;|&nbsp; Periode: <strong>' . htmlspecialchars($rangeInfo) . '</strong>';
+					echo '<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#0369a1;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">';
+					echo '<span>📊 Menampilkan <strong>' . $totalRows . ' transaksi</strong> &nbsp;|&nbsp; Periode: <strong>' . htmlspecialchars($rangeInfo) . '</strong></span>';
+					echo '<button class="no-print" onclick="window.print()" style="padding:8px 16px;background:#4f46e5;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">🖨️ Cetak / Simpan PDF</button>';
+					echo '</div>';
+
+					// Summary stats queries
+					$statQ  = "SELECT COUNT(*) as cnt, COALESCE(SUM(total_harga),0) as total FROM transaksi t {$whereClause}";
+					$statR  = mysqli_query($conn, $statQ);
+					$statRow = $statR ? mysqli_fetch_assoc($statR) : ['cnt' => 0, 'total' => 0];
+					$statPenjualan  = (float)$statRow['total'];
+					$statTransaksi  = (int)$statRow['cnt'];
+
+					$stokQ      = mysqli_query($conn, "SELECT COUNT(*) as cnt FROM stok WHERE jumlah_stok < batas_minimum");
+					$stokRendah = $stokQ ? (int)mysqli_fetch_assoc($stokQ)['cnt'] : 0;
+
+					$menuQ      = mysqli_query($conn, "SELECT COUNT(*) as cnt FROM menu");
+					$totalMenu  = $menuQ ? (int)mysqli_fetch_assoc($menuQ)['cnt'] : 0;
+
+					$periodeLabel = ($filterLabel && $filterLabel !== 'Semua') ? htmlspecialchars($filterLabel) : 'Semua periode';
+
+					// Summary boxes (visible on screen & in print)
+					$boxStyle   = 'border:1px solid #d1d5db;border-radius:6px;padding:12px 10px;text-align:center;background:#fff';
+					$labelStyle = 'font-size:11px;color:#6b7280;margin-bottom:4px';
+					$valueStyle = 'font-size:18px;font-weight:700;color:#111827;word-break:break-all';
+					$subStyle   = 'font-size:11px;color:#9ca3af;margin-top:2px';
+
+					echo '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">';
+
+					echo '<div style="' . $boxStyle . '">';
+					echo '<div style="' . $labelStyle . '">Total Penjualan</div>';
+					echo '<div style="' . $valueStyle . '">Rp ' . number_format($statPenjualan, 0, ',', '.') . '</div>';
+					echo '<div style="' . $subStyle . '">' . $periodeLabel . '</div>';
+					echo '</div>';
+
+					echo '<div style="' . $boxStyle . '">';
+					echo '<div style="' . $labelStyle . '">Total Transaksi</div>';
+					echo '<div style="' . $valueStyle . '">' . $statTransaksi . '</div>';
+					echo '<div style="' . $subStyle . '">' . $periodeLabel . '</div>';
+					echo '</div>';
+
+					echo '<div style="' . $boxStyle . '">';
+					echo '<div style="' . $labelStyle . '">Stok Rendah</div>';
+					echo '<div style="' . $valueStyle . '">' . $stokRendah . ' bahan</div>';
+					echo '<div style="' . $subStyle . '">Saat ini</div>';
+					echo '</div>';
+
+					echo '<div style="' . $boxStyle . '">';
+					echo '<div style="' . $labelStyle . '">Total Menu</div>';
+					echo '<div style="' . $valueStyle . '">' . $totalMenu . ' menu</div>';
+					echo '<div style="' . $subStyle . '">Saat ini</div>';
+					echo '</div>';
+
 					echo '</div>';
 
 					if ($res && $totalRows > 0) {
@@ -151,7 +220,7 @@ require_once __DIR__ . '/../../helpers/format_helper.php';
 						echo '<th style="text-align:left;padding:10px;border-bottom:1px solid #ccc">Metode Pembayaran</th>';
 						echo '<th style="text-align:left;padding:10px;border-bottom:1px solid #ccc">Voucher</th>';
 						echo '<th style="text-align:right;padding:10px;border-bottom:1px solid #ccc">Total</th>';
-						echo '<th style="text-align:center;padding:10px;border-bottom:1px solid #ccc">Aksi</th>';
+						echo '<th class="no-print" style="text-align:center;padding:10px;border-bottom:1px solid #ccc">Aksi</th>';
 						echo '</tr></thead>';
 						echo '<tbody>';
 						
@@ -172,7 +241,7 @@ require_once __DIR__ . '/../../helpers/format_helper.php';
 							echo "<td style=\"padding:10px;vertical-align:top\">{$metode}</td>";
 							echo "<td style=\"padding:10px;vertical-align:top\">{$voucher}</td>";
 							echo "<td style=\"padding:10px;vertical-align:top;text-align:right\">{$total}</td>";
-							echo "<td style=\"padding:10px;vertical-align:top;text-align:center\">";
+							echo "<td class=\"no-print\" style=\"padding:10px;vertical-align:top;text-align:center\">";
 							echo "<a class=\"btn\" href=\"transaksi_detail.php?transaksiNo={$id}\" style=\"padding:6px 10px;font-size:13px\">Detail</a> ";
 							echo "<a class=\"btn\" href=\"transaksi_delete.php?transaksiNo={$id}\" onclick=\"return confirm('Hapus transaksi ini? Semua item dalam transaksi akan dihapus juga.')\" style=\"padding:6px 10px;font-size:13px;background:#ef4444\">Hapus</a>";
 							echo "</td>";

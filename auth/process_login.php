@@ -16,7 +16,7 @@ if ($username === '' || $password === '') {
 }
 
 // Prepared statement to avoid SQL injection
-$stmt = mysqli_prepare($conn, "SELECT usernameNo, username, password, role FROM data_user WHERE username = ? LIMIT 1");
+$stmt = mysqli_prepare($conn, "SELECT usernameNo, username, password, role, karyawanNo FROM data_user WHERE username = ? LIMIT 1");
 if (!$stmt) {
     die('Prepare failed: ' . mysqli_error($conn));
 }
@@ -49,10 +49,11 @@ if ($user) {
     }
 
     if ($authenticated) {
-        $_SESSION['login'] = true;
-        $_SESSION['username'] = $user['username'];
+        $_SESSION['login']      = true;
+        $_SESSION['username']   = $user['username'];
         $_SESSION['usernameNo'] = $user['usernameNo'];
-        $_SESSION['role'] = $user['role'] ?? 'karyawan'; // Default role: karyawan
+        $_SESSION['role']       = $user['role'] ?? 'karyawan';
+        $_SESSION['karyawanNo'] = $user['karyawanNo'];
         header('Location: ../dashboard/dashboard.php');
         exit;
     }

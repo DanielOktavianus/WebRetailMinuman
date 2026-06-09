@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: Times New Roman, serif; font-size: 12pt; margin: 2cm; }
+  h1 { text-align: center; font-size: 14pt; }
+  h2 { text-align: center; font-size: 12pt; font-weight: normal; }
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  th, td { border: 1px solid black; padding: 6px 8px; vertical-align: top; font-size: 11pt; }
+  th { background-color: #d9d9d9; text-align: center; font-weight: bold; }
+  td:first-child { width: 12%; font-weight: bold; }
+  td:nth-child(2) { width: 30%; }
+  td:nth-child(3) { width: 43%; }
+  td:nth-child(4) { width: 15%; text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>TABEL PENGUJIAN WHITE BOX TESTING</h1>
+<h2>Sistem Manajemen Restoran Teh Poci Sangka Bulan</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Fitur</th>
+      <th>Skenario</th>
+      <th>Hasil yang Diharapkan</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    <!-- LOGIN -->
+    <tr>
+      <td rowspan="4">Login</td>
+      <td>Username dan password benar diinputkan, sistem melakukan query ke tabel users</td>
+      <td>Query menemukan data user, session di-set dengan username dan role, kemudian sistem melakukan redirect ke halaman dashboard</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Username atau password salah diinputkan, sistem melakukan query ke tabel users</td>
+      <td>Query tidak menemukan data yang cocok, sistem menampilkan pesan "Login gagal, silakan ulangi" tanpa membuat session</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Field username dan password dikosongkan lalu form disubmit</td>
+      <td>Validasi PHP mendeteksi field kosong, sistem tidak melakukan query ke database dan menampilkan pesan validasi</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>User yang sudah login mencoba mengakses halaman login kembali</td>
+      <td>Sistem mendeteksi session sudah aktif dan melakukan redirect langsung ke halaman dashboard tanpa menampilkan form login</td>
+      <td></td>
+    </tr>
+
+    <!-- KONTROL AKSES -->
+    <tr>
+      <td rowspan="4">Kontrol Akses</td>
+      <td>User dengan role admin mengakses modul yang hanya boleh diakses admin (User Management, Karyawan, Produsen, Detail Resep)</td>
+      <td>Fungsi getAllowedModules() mengembalikan daftar semua modul admin, fungsi canAccessModule() mengembalikan true, halaman berhasil ditampilkan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>User dengan role karyawan mengakses modul yang hanya boleh diakses admin melalui URL langsung</td>
+      <td>Fungsi canAccessModule() mengembalikan false karena modul tidak ada dalam daftar karyawan, sistem melakukan redirect ke halaman login</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>User yang belum login mencoba mengakses halaman dashboard atau modul apapun</td>
+      <td>Sistem mendeteksi session kosong melalui pengecekan $_SESSION, kemudian melakukan redirect ke halaman login</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Sidebar ditampilkan setelah user login</td>
+      <td>Fungsi getAllowedModules() dipanggil, sidebar hanya menampilkan menu yang sesuai dengan role user yang sedang login</td>
+      <td></td>
+    </tr>
+
+    <!-- DASHBOARD -->
+    <tr>
+      <td rowspan="4">Dashboard</td>
+      <td>Filter penjualan "Hari Ini" dipilih</td>
+      <td>Sistem menjalankan query dengan kondisi WHERE DATE(tanggal) = CURDATE(), data penjualan hari ini berhasil diambil dan ditampilkan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Filter penjualan "7 Hari Terakhir" dipilih</td>
+      <td>Sistem menjalankan query dengan kondisi WHERE tanggal >= DATE_SUB(NOW(), INTERVAL 7 DAY), data 7 hari terakhir berhasil ditampilkan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Filter penjualan "Tahun Ini" dipilih</td>
+      <td>Sistem menjalankan query dengan kondisi WHERE YEAR(tanggal) = YEAR(NOW()), data tahun berjalan berhasil ditampilkan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>KPI stok rendah dihitung saat dashboard dibuka</td>
+      <td>Sistem menjalankan query COUNT pada tabel stok dengan kondisi jumlah_stok kurang dari atau sama dengan batas_minimum, hasilnya ditampilkan pada kartu KPI</td>
+      <td></td>
+    </tr>
+
+    <!-- MENU -->
+    <tr>
+      <td rowspan="4">Menu</td>
+      <td>Nama menu baru yang belum ada diinputkan lalu disimpan</td>
+      <td>Sistem menjalankan query INSERT INTO menu, data berhasil tersimpan dan pesan sukses ditampilkan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Field nama menu dikosongkan lalu form disubmit</td>
+      <td>Validasi PHP mendeteksi nama_menu kosong melalui fungsi empty(), INSERT tidak dijalankan dan pesan error ditampilkan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Data menu yang ada diedit dan disimpan</td>
+      <td>Sistem menjalankan query UPDATE menu SET nama_menu WHERE MenuNo, perubahan berhasil tersimpan di database</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Tombol hapus menu diklik dan dikonfirmasi</td>
+      <td>Sistem menjalankan query DELETE FROM menu WHERE MenuNo, data terhapus beserta data varian menu dan resep yang terkait</td>
+      <td></td>
+    </tr>
+
+    <!-- VARIAN MENU -->
+    <tr>
+      <td rowspan="4">Varian Menu</td>
+      <td>Kombinasi menu dan ukuran baru yang belum ada diinputkan</td>
+      <td>Sistem melakukan query SELECT untuk cek duplikat kombinasi MenuNo dan UkuranNo, tidak ditemukan, INSERT INTO varian_menu berhasil dijalankan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Kombinasi menu dan ukuran yang sudah ada diinputkan kembali</td>
+      <td>Sistem melakukan query SELECT cek duplikat, data ditemukan, INSERT tidak dijalankan dan sistem menampilkan pesan duplikat beserta link ke halaman Edit</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Harga varian menu diedit dan disimpan</td>
+      <td>Sistem menjalankan query UPDATE varian_menu SET Harga WHERE VarianMenuNo, perubahan harga berhasil tersimpan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Tombol hapus varian menu diklik dan dikonfirmasi</td>
+      <td>Sistem menjalankan query DELETE FROM varian_menu WHERE VarianMenuNo, data varian berhasil terhapus</td>
+      <td></td>
+    </tr>
+
+    <!-- RESEP -->
+    <tr>
+      <td rowspan="4">Resep</td>
+      <td>Menu yang belum punya resep dipilih dan keterangan diisi lalu disimpan</td>
+      <td>Sistem menjalankan query INSERT INTO resep dengan MenuNo dan Keterangan, data berhasil tersimpan dan link "Isi Bahan Sekarang" ditampilkan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Menu yang sudah punya resep dipilih dan form disubmit</td>
+      <td>Sistem mendeteksi error duplikat dari MySQL (error code 1062), query SELECT dijalankan untuk mendapatkan ResepNo yang ada, pesan error ditampilkan beserta link Edit resep</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Keterangan resep diedit dan disimpan</td>
+      <td>Sistem menjalankan query UPDATE resep SET Keterangan WHERE ResepNo, perubahan berhasil tersimpan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Tombol hapus resep diklik dan dikonfirmasi</td>
+      <td>Sistem menjalankan query DELETE FROM resep WHERE ResepNo, data resep terhapus beserta seluruh detail bahan yang terkait melalui foreign key cascade</td>
+      <td></td>
+    </tr>
+
+    <!-- DETAIL RESEP -->
+    <tr>
+      <td rowspan="4">Detail Resep</td>
+      <td>Bahan baru ditambahkan untuk kombinasi resep dan ukuran yang belum pernah diisi</td>
+      <td>Sistem menjalankan query INSERT INTO detail_resep, data bahan berhasil tersimpan dengan ResepNo, UkuranNo, StokNo, SatuanNo, dan jumlah</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Bahan yang sama untuk resep dan ukuran yang sama diinputkan kembali</td>
+      <td>Sistem menjalankan query INSERT dengan ON DUPLICATE KEY UPDATE, data yang ada diperbarui dengan SatuanNo dan jumlah yang baru tanpa membuat baris duplikat</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Bahan dipilih dari dropdown stok</td>
+      <td>Sistem mengambil SatuanNo dari tabel stok melalui mapping JavaScript, field satuan otomatis terkunci dan menampilkan nama satuan sesuai data stok</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Tombol hapus bahan dari resep diklik dan dikonfirmasi</td>
+      <td>Sistem menjalankan query DELETE FROM detail_resep WHERE DetailResepNo, bahan berhasil dihapus dari resep tersebut</td>
+      <td></td>
+    </tr>
+
+    <!-- SATUAN -->
+    <tr>
+      <td rowspan="3">Satuan</td>
+      <td>Nama satuan baru diinputkan dan disimpan</td>
+      <td>Sistem menjalankan query INSERT INTO satuan, data berhasil tersimpan dan muncul di daftar satuan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Data satuan diedit dan disimpan</td>
+      <td>Sistem menjalankan query UPDATE satuan SET nama_satuan WHERE SatuanNo, perubahan berhasil tersimpan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Tombol hapus satuan diklik dan dikonfirmasi</td>
+      <td>Sistem menjalankan query DELETE FROM satuan WHERE SatuanNo, data satuan berhasil terhapus</td>
+      <td></td>
+    </tr>
+
+    <!-- BAHAN -->
+    <tr>
+      <td rowspan="4">Bahan</td>
+      <td>Nama bahan baru yang belum ada diinputkan dan disimpan</td>
+      <td>Sistem melakukan query SELECT cek duplikat dengan LOWER(nama_bahan), tidak ditemukan, INSERT INTO bahan berhasil dijalankan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Nama bahan yang sudah ada diinputkan (termasuk dengan huruf kapital berbeda)</td>
+      <td>Sistem melakukan query cek duplikat dengan LOWER(nama_bahan) sehingga tidak case-sensitive, data ditemukan, INSERT tidak dijalankan dan pesan error ditampilkan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Data bahan diedit dan disimpan</td>
+      <td>Sistem menjalankan query UPDATE bahan SET nama_bahan WHERE BahanNo, perubahan berhasil tersimpan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Tombol hapus bahan diklik dan dikonfirmasi</td>
+      <td>Sistem menjalankan query DELETE FROM bahan WHERE BahanNo, data bahan berhasil terhapus</td>
+      <td></td>
+    </tr>
+
+    <!-- PRODUSEN -->
+    <tr>
+      <td rowspan="3">Produsen</td>
+      <td>Data produsen baru diinputkan dan disimpan</td>
+      <td>Sistem menjalankan query INSERT INTO produsen, data berhasil tersimpan dan muncul di daftar produsen</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Data produsen diedit dan disimpan</td>
+      <td>Sistem menjalankan query UPDATE produsen WHERE ProdusenNo, perubahan berhasil tersimpan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Tombol hapus produsen diklik dan dikonfirmasi</td>
+      <td>Sistem menjalankan query DELETE FROM produsen WHERE ProdusenNo, data berhasil terhapus</td>
+      <td></td>
+    </tr>
+
+    <!-- STOK -->
+    <tr>
+      <td rowspan="6">Stok</td>
+      <td>Bahan baru yang belum ada di stok ditambahkan</td>
+      <td>Sistem melakukan query SELECT cek duplikat BahanNo di tabel stok, tidak ditemukan, INSERT INTO stok berhasil dijalankan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Bahan yang sudah ada di stok ditambahkan kembali</td>
+      <td>Sistem melakukan query SELECT cek duplikat BahanNo, data ditemukan, INSERT tidak dijalankan dan pesan error ditampilkan beserta saran menggunakan tombol Restock</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Jumlah stok lebih besar dari batas minimum</td>
+      <td>Sistem menghitung kondisi jumlah_stok > batas_minimum dan menampilkan label status "AMAN" pada baris stok tersebut</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Jumlah stok kurang dari atau sama dengan batas minimum namun lebih dari nol</td>
+      <td>Sistem menghitung kondisi jumlah_stok kurang dari atau sama dengan batas_minimum dan menampilkan label status "RENDAH"</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Jumlah stok sama dengan nol</td>
+      <td>Sistem mendeteksi kondisi jumlah_stok = 0 dan menampilkan label status "HABIS"</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Tombol Restock diklik dan jumlah tambahan diinputkan</td>
+      <td>Sistem menjalankan query UPDATE stok SET jumlah_stok = jumlah_stok + jumlah_tambahan WHERE StokNo, jumlah stok bertambah dan status diperbarui secara otomatis</td>
+      <td></td>
+    </tr>
+
+    <!-- TRANSAKSI -->
+    <tr>
+      <td rowspan="7">Transaksi</td>
+      <td>Item transaksi dipilih namun menu tidak memiliki resep</td>
+      <td>Sistem menjalankan query SELECT ResepNo WHERE MenuNo, tidak ditemukan, menu ditambahkan ke dalam daftar missingList dan transaksi dibatalkan sebelum INSERT dijalankan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Item transaksi dipilih, menu memiliki resep namun detail bahan untuk ukuran tersebut belum diisi</td>
+      <td>Sistem menjalankan query COUNT pada detail_resep WHERE ResepNo AND UkuranNo, hasilnya nol, menu ditambahkan ke missingList dan transaksi dibatalkan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Semua item transaksi valid (memiliki resep dan bahan lengkap)</td>
+      <td>missingList kosong, sistem melanjutkan ke proses INSERT transaksi menggunakan mysqli_begin_transaction untuk memastikan atomisitas</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Voucher diskon diterapkan pada transaksi</td>
+      <td>Sistem mengambil nilai_diskon dari tabel voucher, menghitung total_harga dikurangi nilai_diskon, dan memastikan hasil tidak kurang dari nol menggunakan fungsi max(0, total - diskon)</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Transaksi berhasil disimpan, sistem melakukan pengurangan stok</td>
+      <td>Sistem mengambil MenuNo dan UkuranNo dari varian_menu, mencari ResepNo dari tabel resep, mengambil daftar bahan dari detail_resep, kemudian menjalankan UPDATE stok SET jumlah_stok = jumlah_stok - (takaran × qty) untuk setiap bahan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Salah satu proses INSERT atau UPDATE stok gagal di tengah transaksi</td>
+      <td>Sistem mendeteksi exception, memanggil mysqli_rollback() sehingga seluruh perubahan dibatalkan dan database kembali ke kondisi semula</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Seluruh proses transaksi berhasil</td>
+      <td>Sistem memanggil mysqli_commit(), data transaksi dan detail transaksi tersimpan secara permanen, stok berkurang sesuai resep</td>
+      <td></td>
+    </tr>
+
+    <!-- VOUCHER -->
+    <tr>
+      <td rowspan="3">Voucher</td>
+      <td>Data voucher baru diinputkan dan disimpan</td>
+      <td>Sistem menjalankan query INSERT INTO voucher, data berhasil tersimpan dan muncul di daftar voucher</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Nilai diskon voucher diedit dan disimpan</td>
+      <td>Sistem menjalankan query UPDATE voucher SET nilai_diskon WHERE voucherNo, perubahan berhasil tersimpan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Tombol hapus voucher diklik dan dikonfirmasi</td>
+      <td>Sistem menjalankan query DELETE FROM voucher WHERE voucherNo, data voucher berhasil terhapus</td>
+      <td></td>
+    </tr>
+
+    <!-- METODE PEMBAYARAN -->
+    <tr>
+      <td rowspan="3">Metode Pembayaran</td>
+      <td>Metode pembayaran baru diinputkan dan disimpan</td>
+      <td>Sistem menjalankan query INSERT INTO metode_pembayaran, data berhasil tersimpan dan muncul di daftar metode</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Nama metode pembayaran diedit dan disimpan</td>
+      <td>Sistem menjalankan query UPDATE metode_pembayaran SET nama_metode WHERE metode_pembayaranNo, perubahan berhasil tersimpan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Tombol hapus metode pembayaran diklik dan dikonfirmasi</td>
+      <td>Sistem menjalankan query DELETE FROM metode_pembayaran WHERE metode_pembayaranNo, data berhasil terhapus</td>
+      <td></td>
+    </tr>
+
+    <!-- USER MANAGEMENT -->
+    <tr>
+      <td rowspan="4">User Management</td>
+      <td>Username baru yang belum terdaftar diinputkan beserta password dan role</td>
+      <td>Sistem melakukan query SELECT cek duplikat username, tidak ditemukan, password di-hash menggunakan password_hash(), kemudian INSERT INTO users berhasil dijalankan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Username yang sudah terdaftar diinputkan kembali</td>
+      <td>Sistem melakukan query SELECT cek duplikat username, data ditemukan, INSERT tidak dijalankan dan pesan error "username sudah digunakan" ditampilkan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Role user diedit dan disimpan</td>
+      <td>Sistem menjalankan query UPDATE users SET role WHERE userNo, perubahan role berhasil tersimpan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Tombol hapus user diklik dan dikonfirmasi</td>
+      <td>Sistem menjalankan query DELETE FROM users WHERE userNo, data user berhasil terhapus</td>
+      <td></td>
+    </tr>
+
+    <!-- KARYAWAN -->
+    <tr>
+      <td rowspan="3">Karyawan</td>
+      <td>Data karyawan baru diinputkan dan disimpan</td>
+      <td>Sistem menjalankan query INSERT INTO karyawan, data berhasil tersimpan dan muncul di daftar karyawan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Data karyawan diedit dan disimpan</td>
+      <td>Sistem menjalankan query UPDATE karyawan WHERE karyawanNo, perubahan berhasil tersimpan</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Tombol hapus karyawan diklik dan dikonfirmasi</td>
+      <td>Sistem menjalankan query DELETE FROM karyawan WHERE karyawanNo, data berhasil terhapus</td>
+      <td></td>
+    </tr>
+
+    <!-- LOGOUT -->
+    <tr>
+      <td>Logout</td>
+      <td>Tombol logout diklik</td>
+      <td>Sistem memanggil session_destroy() untuk menghapus seluruh data session, kemudian melakukan redirect ke halaman login</td>
+      <td></td>
+    </tr>
+
+  </tbody>
+</table>
+
+</body>
+</html>

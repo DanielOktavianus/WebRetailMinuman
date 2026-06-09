@@ -8,7 +8,7 @@ $errorMessage   = '';
 $missingList    = []; // menu yang belum punya resep/bahan
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $karyawanNo          = isset($_POST['karyawanNo'])          && is_numeric($_POST['karyawanNo'])          ? (int)   $_POST['karyawanNo']          : null;
+    $karyawanNo          = isset($_SESSION['karyawanNo']) && is_numeric($_SESSION['karyawanNo']) ? (int) $_SESSION['karyawanNo'] : null;
     $metode_pembayaranNo = isset($_POST['metode_pembayaranNo']) && is_numeric($_POST['metode_pembayaranNo']) ? (int)   $_POST['metode_pembayaranNo'] : null;
     $voucherNo           = isset($_POST['voucherNo'])           && $_POST['voucherNo'] !== '' && is_numeric($_POST['voucherNo']) ? (int) $_POST['voucherNo'] : null;
     $tanggal             = isset($_POST['tanggal']) && trim($_POST['tanggal']) !== '' ? trim($_POST['tanggal']) : date('Y-m-d H:i:s');
@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($karyawanNo === null || $karyawanNo <= 0) {
-        $errorMessage = 'Karyawan harus diisi.';
+        $errorMessage = 'Sesi tidak valid, silakan login ulang.';
     } elseif ($metode_pembayaranNo === null || $metode_pembayaranNo <= 0) {
         $errorMessage = 'Metode Pembayaran harus diisi.';
     } elseif (empty($items)) {
@@ -197,16 +197,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Dropdown data
-$karyawanResult = mysqli_query($conn, "SELECT karyawanNo, nama FROM karyawan ORDER BY nama ASC");
+// Ambil nama karyawan yang sedang login
+$karyawanNama = '';
+$karyawanNoSesi = isset($_SESSION['karyawanNo']) ? (int) $_SESSION['karyawanNo'] : 0;
+if ($karyawanNoSesi > 0) {
+    $kStmt = mysqli_prepare($conn, "SELECT nama FROM karyawan WHERE karyawanNo = ? LIMIT 1");
+    mysqli_stmt_bind_param($kStmt, 'i', $karyawanNoSesi);
+    mysqli_stmt_execute($kStmt);
+    $kRow = mysqli_fetch_assoc(mysqli_stmt_get_result($kStmt));
+    mysqli_stmt_close($kStmt);
+    $karyawanNama = $kRow['nama'] ?? '';
+}
 $metodeResult   = mysqli_query($conn, "SELECT metode_pembayaranNo, nama_metode FROM metode_pembayaran ORDER BY nama_metode ASC");
 $voucherResult  = mysqli_query($conn, "SELECT voucherNo, nama_voucher, nilai_diskon FROM voucher ORDER BY nama_voucher ASC");
-$varianResult   = mysqli_query($conn,
+$varianArr = [];
+$_vQ = mysqli_query($conn,
     "SELECT vm.VarianMenuNo, m.nama_menu, u.nama_ukuran, vm.Harga
      FROM varian_menu vm
      LEFT JOIN menu m   ON vm.MenuNo   = m.MenuNo
      LEFT JOIN ukuran u ON vm.ukuranNo = u.UkuranNo
      ORDER BY m.nama_menu ASC, u.UkuranNo ASC");
+if ($_vQ) while ($r = mysqli_fetch_assoc($_vQ)) $varianArr[] = $r;
 ?>
 <!doctype html>
 <html lang="id">
@@ -222,28 +233,75 @@ $varianResult   = mysqli_query($conn,
         table.items-table { width:100%; border-collapse:collapse; }
         table.items-table th, table.items-table td { padding:6px; text-align:left; border-bottom:1px solid #d1d5db; }
         table.items-table th { background:#e5e7eb; font-weight:bold; }
+
+        .menu-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; margin-top:10px; }
+        .menu-card {
+            border:2px solid #d1d5db; border-radius:10px; padding:12px 10px;
+            text-align:center; cursor:pointer; background:#fff;
+            transition:all .15s ease; user-select:none;
+        }
+        .menu-card:hover { border-color:#6366f1; background:#eef2ff; transform:translateY(-2px); box-shadow:0 4px 10px rgba(0,0,0,.1); }
+        .menu-card:active { transform:translateY(0); }
+        .menu-card.in-order { border-color:#10b981; background:#ecfdf5; }
+        .menu-card-name { font-weight:700; font-size:13px; color:#111827; }
+        .menu-card-size { font-size:12px; color:#6b7280; margin:2px 0; }
+        .menu-card-price { font-size:13px; font-weight:600; color:#6366f1; }
+        .menu-card-qty { margin-top:6px; font-size:12px; font-weight:700; color:#10b981; }
+        .qty-btn { display:inline-flex; align-items:center; gap:6px; }
+        .qty-btn button { width:24px; height:24px; border:none; border-radius:50%; cursor:pointer; font-size:14px; font-weight:700; line-height:1; }
+        .qty-btn .btn-minus { background:#ef4444; color:#fff; }
+        .qty-btn .btn-plus  { background:#10b981; color:#fff; }
     </style>
     <script>
         let itemsData = [];
 
-        function addItem() {
-            const sel    = document.getElementById('VarianMenuNo');
-            const jumlah = parseInt(document.getElementById('jumlah').value) || 0;
-            if (!sel.value || jumlah <= 0) { alert('Pilih varian dan masukkan jumlah > 0'); return; }
-
-            const opt = sel.options[sel.selectedIndex];
-            itemsData.push({
-                varianMenuNo: parseInt(sel.value),
-                jumlah:       jumlah,
-                hargaSatuan:  parseFloat(opt.getAttribute('data-price')) || 0,
-                text:         opt.text
-            });
-            document.getElementById('jumlah').value = 1;
-            sel.value = '';
+        function addFromCard(varianMenuNo, hargaSatuan, text) {
+            const existing = itemsData.find(i => i.varianMenuNo === varianMenuNo);
+            if (existing) {
+                existing.jumlah++;
+            } else {
+                itemsData.push({ varianMenuNo, jumlah: 1, hargaSatuan, text });
+            }
             updateDisplay();
+            updateCards();
         }
 
-        function removeItem(i) { itemsData.splice(i, 1); updateDisplay(); }
+        function changeQty(varianMenuNo, delta) {
+            const idx = itemsData.findIndex(i => i.varianMenuNo === varianMenuNo);
+            if (idx === -1) return;
+            itemsData[idx].jumlah += delta;
+            if (itemsData[idx].jumlah <= 0) itemsData.splice(idx, 1);
+            updateDisplay();
+            updateCards();
+        }
+
+        function filterCards() {
+            const q = document.getElementById('menuSearch').value.toLowerCase();
+            document.querySelectorAll('.menu-card').forEach(card => {
+                const name = card.querySelector('.menu-card-name').textContent.toLowerCase();
+                const size = card.querySelector('.menu-card-size').textContent.toLowerCase();
+                card.style.display = (name.includes(q) || size.includes(q)) ? '' : 'none';
+            });
+        }
+
+        function updateCards() {
+            document.querySelectorAll('.menu-card').forEach(card => {
+                const vmNo = parseInt(card.dataset.id);
+                const item = itemsData.find(i => i.varianMenuNo === vmNo);
+                const qtyEl = card.querySelector('.menu-card-qty');
+                if (item) {
+                    card.classList.add('in-order');
+                    qtyEl.innerHTML = `<span class="qty-btn">
+                        <button class="btn-minus" type="button" onclick="event.stopPropagation();changeQty(${vmNo},-1)">−</button>
+                        <span>${item.jumlah}</span>
+                        <button class="btn-plus"  type="button" onclick="event.stopPropagation();changeQty(${vmNo},1)">+</button>
+                    </span>`;
+                } else {
+                    card.classList.remove('in-order');
+                    qtyEl.innerHTML = '';
+                }
+            });
+        }
 
         function updateDisplay() {
             const container = document.getElementById('itemsContainer');
@@ -252,25 +310,24 @@ $varianResult   = mysqli_query($conn,
 
             if (itemsData.length > 0) {
                 html += '<table class="items-table"><thead><tr>';
-                html += '<th>Menu</th><th style="text-align:right">Qty</th><th style="text-align:right">Harga Satuan</th><th style="text-align:right">Subtotal</th><th style="text-align:center">Aksi</th>';
+                html += '<th>Menu</th><th style="text-align:center">Qty</th><th style="text-align:right">Harga Satuan</th><th style="text-align:right">Subtotal</th>';
                 html += '</tr></thead><tbody>';
-                itemsData.forEach((item, i) => {
+                itemsData.forEach(item => {
                     const sub = item.jumlah * item.hargaSatuan;
                     total += sub;
                     html += `<tr>
                         <td>${item.text}</td>
-                        <td style="text-align:right">${item.jumlah}</td>
+                        <td style="text-align:center">${item.jumlah}</td>
                         <td style="text-align:right">${fmt(item.hargaSatuan)}</td>
                         <td style="text-align:right">${fmt(sub)}</td>
-                        <td style="text-align:center"><button type="button" onclick="removeItem(${i})" style="padding:4px 8px;background:#ef4444;color:white;border:none;border-radius:4px;cursor:pointer">Hapus</button></td>
                     </tr>`;
                 });
                 html += `<tr style="background:#e5e7eb;font-weight:bold">
                     <td colspan="3" style="text-align:right">TOTAL</td>
-                    <td style="text-align:right">${fmt(total)}</td><td></td>
+                    <td style="text-align:right">${fmt(total)}</td>
                 </tr></tbody></table>`;
             } else {
-                html = '<p style="color:#6b7280">Belum ada item.</p>';
+                html = '<p style="color:#6b7280">Pilih menu di atas untuk menambahkan item.</p>';
             }
             container.innerHTML = html;
             hidden.value = JSON.stringify(itemsData);
@@ -336,16 +393,8 @@ $varianResult   = mysqli_query($conn,
 
                         <div class="row mt-12">
                             <div>
-                                <label for="karyawanNo">Karyawan</label>
-                                <select id="karyawanNo" name="karyawanNo" class="form-input" required>
-                                    <option value="">-- Pilih Karyawan --</option>
-                                    <?php if ($karyawanResult): while ($row = mysqli_fetch_assoc($karyawanResult)): ?>
-                                        <option value="<?php echo $row['karyawanNo']; ?>"
-                                            <?php echo (isset($_POST['karyawanNo']) && $_POST['karyawanNo'] == $row['karyawanNo']) ? 'selected' : ''; ?>>
-                                            <?php echo htmlspecialchars($row['nama']); ?>
-                                        </option>
-                                    <?php endwhile; endif; ?>
-                                </select>
+                                <label>Karyawan</label>
+                                <input class="form-input" type="text" value="<?php echo htmlspecialchars($karyawanNama); ?>" readonly style="background:#f3f4f6;color:#6b7280;cursor:not-allowed;">
                             </div>
                             <div>
                                 <label for="metode_pembayaranNo">Metode Pembayaran</label>
@@ -374,28 +423,26 @@ $varianResult   = mysqli_query($conn,
                             </select>
                         </div>
 
-                        <!-- Tambah item -->
-                        <div style="margin-top:20px;padding:12px;background:#f0fdf4;border-radius:8px">
-                            <h3 style="margin-top:0">Tambah Item</h3>
-                            <div class="row">
-                                <div>
-                                    <label for="VarianMenuNo">Menu / Varian</label>
-                                    <select id="VarianMenuNo" class="form-input">
-                                        <option value="">-- Pilih Menu --</option>
-                                        <?php if ($varianResult): while ($row = mysqli_fetch_assoc($varianResult)): ?>
-                                            <option value="<?php echo $row['VarianMenuNo']; ?>" data-price="<?php echo $row['Harga']; ?>">
-                                                <?php echo htmlspecialchars($row['nama_menu'] . ' - ' . $row['nama_ukuran'] . ' (' . rupiah($row['Harga']) . ')'); ?>
-                                            </option>
-                                        <?php endwhile; endif; ?>
-                                    </select>
+                        <!-- Pilih menu — card grid -->
+                        <div style="margin-top:20px;padding:16px;background:#f0fdf4;border-radius:8px">
+                            <h3 style="margin-top:0;margin-bottom:4px">Pilih Menu</h3>
+                            <p style="margin:0 0 10px;font-size:13px;color:#6b7280">Klik kartu untuk menambah, gunakan tombol − / + untuk ubah jumlah.</p>
+                            <input type="text" id="menuSearch" class="form-input" placeholder="🔍 Cari nama menu..." oninput="filterCards()" style="margin-bottom:12px;max-width:320px;">
+                            <div class="menu-grid">
+                                <?php foreach ($varianArr as $v):
+                                    $vmNo  = (int)   $v['VarianMenuNo'];
+                                    $harga = (float) $v['Harga'];
+                                    $label = htmlspecialchars($v['nama_menu'] . ' - ' . $v['nama_ukuran']);
+                                ?>
+                                <div class="menu-card"
+                                     data-id="<?php echo $vmNo; ?>"
+                                     onclick="addFromCard(<?php echo $vmNo; ?>, <?php echo $harga; ?>, '<?php echo addslashes($label); ?>')">
+                                    <div class="menu-card-name"><?php echo htmlspecialchars($v['nama_menu']); ?></div>
+                                    <div class="menu-card-size"><?php echo htmlspecialchars($v['nama_ukuran']); ?></div>
+                                    <div class="menu-card-price"><?php echo rupiah($harga); ?></div>
+                                    <div class="menu-card-qty"></div>
                                 </div>
-                                <div>
-                                    <label for="jumlah">Jumlah</label>
-                                    <input id="jumlah" class="form-input" type="number" min="1" value="1">
-                                </div>
-                                <div style="display:flex;align-items:flex-end">
-                                    <button type="button" onclick="addItem()" class="btn" style="padding:10px 14px">+ Tambah</button>
-                                </div>
+                                <?php endforeach; ?>
                             </div>
                         </div>
 
@@ -413,43 +460,6 @@ $varianResult   = mysqli_query($conn,
                     </form>
                 </div>
 
-                <!-- Transaksi terbaru -->
-                <div class="card" style="margin-top:18px">
-                    <h2>Transaksi Terbaru</h2>
-                    <?php
-                    $recentRes = mysqli_query($conn,
-                        "SELECT t.transaksiNo, t.tanggal, t.total_harga, COALESCE(k.nama,'-') AS karyawan
-                         FROM transaksi t
-                         LEFT JOIN karyawan k ON t.karyawanNo = k.karyawanNo
-                         ORDER BY t.transaksiNo DESC LIMIT 10");
-                    if ($recentRes && mysqli_num_rows($recentRes) > 0):
-                        echo '<table style="width:100%;border-collapse:collapse">';
-                        echo '<thead><tr style="background:#f0f0f0">
-                            <th style="text-align:left;padding:8px">#</th>
-                            <th style="text-align:left;padding:8px">No</th>
-                            <th style="text-align:left;padding:8px">Tanggal</th>
-                            <th style="text-align:left;padding:8px">Karyawan</th>
-                            <th style="text-align:right;padding:8px">Total</th>
-                            <th style="text-align:center;padding:8px">Aksi</th>
-                        </tr></thead><tbody>';
-                        $i = 1;
-                        while ($row = mysqli_fetch_assoc($recentRes)):
-                            $id  = htmlspecialchars($row['transaksiNo']);
-                            echo '<tr style="border-bottom:1px solid #eee">';
-                            echo "<td style=\"padding:8px\">" . ($i++) . "</td>";
-                            echo "<td style=\"padding:8px\">{$id}</td>";
-                            echo "<td style=\"padding:8px\">" . htmlspecialchars($row['tanggal']) . "</td>";
-                            echo "<td style=\"padding:8px\">" . htmlspecialchars($row['karyawan']) . "</td>";
-                            echo "<td style=\"padding:8px;text-align:right\">" . rupiah($row['total_harga']) . "</td>";
-                            echo "<td style=\"padding:8px;text-align:center\"><a class=\"btn\" href=\"transaksi_detail.php?transaksiNo={$id}\" style=\"padding:6px 10px;font-size:13px\">Detail</a></td>";
-                            echo '</tr>';
-                        endwhile;
-                        echo '</tbody></table>';
-                    else:
-                        echo '<p>Belum ada transaksi.</p>';
-                    endif;
-                    ?>
-                </div>
             </div>
         </main>
     </div>

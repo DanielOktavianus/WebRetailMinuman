@@ -1,8 +1,9 @@
 <?php
 require_once __DIR__ . '/../../config/database.php';
 
-$successMessage   = '';
-$errorMessage     = '';
+$successMessage = '';
+$errorMessage   = '';
+$warningMessage = '';
 
 // ResepNo — dari URL atau dari POST
 $selectedResepNo  = isset($_GET['ResepNo'])  && is_numeric($_GET['ResepNo'])
@@ -35,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $successCount = 0;
         $skipCount    = 0;
+        $dupNames     = [];
 
         for ($i = 0; $i < count($StokNos); $i++) {
             $StokNo   = isset($StokNos[$i])   && is_numeric($StokNos[$i])   ? (int)   $StokNos[$i]   : null;
@@ -44,10 +46,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($StokNo === null || $SatuanNo === null || $jumlah === null) { $skipCount++; continue; }
 
+            // Cek apakah bahan ini sudah ada untuk resep + ukuran yang sama
+            $cek = mysqli_prepare($conn,
+                "SELECT 1 FROM detail_resep WHERE ResepNo = ? AND UkuranNo = ? AND StokNo = ? LIMIT 1");
+            mysqli_stmt_bind_param($cek, 'iii', $ResepNo, $UkuranNo, $StokNo);
+            mysqli_stmt_execute($cek);
+            mysqli_stmt_store_result($cek);
+            $sudahAda = mysqli_stmt_num_rows($cek) > 0;
+            mysqli_stmt_close($cek);
+
+            if ($sudahAda) {
+                $namaQ   = mysqli_query($conn,
+                    "SELECT b.nama_bahan FROM stok s LEFT JOIN bahan b ON s.BahanNo = b.BahanNo WHERE s.StokNo = {$StokNo} LIMIT 1");
+                $namaRow = $namaQ ? mysqli_fetch_assoc($namaQ) : null;
+                $dupNames[] = htmlspecialchars($namaRow['nama_bahan'] ?? "Bahan #$StokNo");
+                continue;
+            }
+
             $stmt = mysqli_prepare($conn,
-                "INSERT INTO detail_resep (ResepNo, UkuranNo, StokNo, SatuanNo, jumlah)
-                 VALUES (?, ?, ?, ?, ?)
-                 ON DUPLICATE KEY UPDATE SatuanNo = VALUES(SatuanNo), jumlah = VALUES(jumlah)");
+                "INSERT INTO detail_resep (ResepNo, UkuranNo, StokNo, SatuanNo, jumlah) VALUES (?, ?, ?, ?, ?)");
             if (!$stmt) { $skipCount++; continue; }
             mysqli_stmt_bind_param($stmt, 'iiiid', $ResepNo, $UkuranNo, $StokNo, $SatuanNo, $jumlah);
             mysqli_stmt_execute($stmt) ? $successCount++ : $skipCount++;
@@ -55,38 +72,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $ukuranNama = htmlspecialchars($ukuranList[$UkuranNo] ?? '');
+
+        if (!empty($dupNames)) {
+            $dupList        = implode(', ', $dupNames);
+            $warningMessage = "Bahan berikut sudah ada untuk ukuran <strong>{$ukuranNama}</strong>: "
+                            . "<strong>{$dupList}</strong>. "
+                            . "Gunakan tombol <strong>Edit</strong> di tabel bawah untuk mengubah jumlahnya.";
+        }
+
         if ($successCount > 0) {
             $successMessage = "{$successCount} bahan berhasil disimpan untuk ukuran <strong>{$ukuranNama}</strong>."
                 . ($skipCount > 0 ? " ({$skipCount} baris dilewati)" : '');
             $selectedUkuranNo = $UkuranNo;
             $_POST = [];
-        } else {
+        } elseif (empty($dupNames)) {
             $errorMessage = 'Tidak ada data tersimpan. Pastikan bahan dan jumlah diisi dengan benar.';
         }
     }
 }
 
-/* ── DATA DROPDOWN ─────────────────────────────────────────────── */
-$resepResult  = mysqli_query($conn,
-    "SELECT r.ResepNo, m.nama_menu
-     FROM resep r LEFT JOIN menu m ON r.MenuNo = m.MenuNo
-     ORDER BY m.nama_menu ASC");
-$stokResult = mysqli_query($conn,
+/* ── DATA QUERY ─────────────────────────────────────────────────── */
+// Semua resep (ResepNo → nama_menu)
+$resepArr = [];
+$resepQ   = mysqli_query($conn,
+    "SELECT r.ResepNo, m.nama_menu FROM resep r LEFT JOIN menu m ON r.MenuNo = m.MenuNo ORDER BY m.nama_menu ASC");
+if ($resepQ) while ($r = mysqli_fetch_assoc($resepQ)) $resepArr[(int)$r['ResepNo']] = $r['nama_menu'];
+
+$selectedMenuNama = $selectedResepNo ? ($resepArr[$selectedResepNo] ?? '') : '';
+
+// Stok bahan untuk form
+$stokArr = [];
+$stokQ   = mysqli_query($conn,
     "SELECT s.StokNo, b.nama_bahan, s.SatuanNo, sat.nama_satuan
      FROM stok s
      LEFT JOIN bahan b    ON s.BahanNo  = b.BahanNo
      LEFT JOIN satuan sat ON s.SatuanNo = sat.SatuanNo
      ORDER BY b.nama_bahan ASC");
+if ($stokQ) while ($r = mysqli_fetch_assoc($stokQ)) $stokArr[] = $r;
 
-$stokArray = [];
-if ($stokResult) while ($r = mysqli_fetch_assoc($stokResult)) $stokArray[] = $r;
+// Detail resep yang sudah tersimpan — group by ResepNo → UkuranNama → bahan[]
+$whereForList = $selectedResepNo ? "WHERE dr.ResepNo = {$selectedResepNo}" : '';
+$listRes = mysqli_query($conn,
+    "SELECT dr.DetailResepNo, dr.ResepNo,
+            m.nama_menu, u.nama_ukuran, u.UkuranNo,
+            b.nama_bahan, sat.nama_satuan, dr.jumlah
+     FROM detail_resep dr
+     LEFT JOIN resep r    ON dr.ResepNo  = r.ResepNo
+     LEFT JOIN menu m     ON r.MenuNo    = m.MenuNo
+     LEFT JOIN ukuran u   ON dr.UkuranNo = u.UkuranNo
+     LEFT JOIN stok st    ON dr.StokNo   = st.StokNo
+     LEFT JOIN bahan b    ON st.BahanNo  = b.BahanNo
+     LEFT JOIN satuan sat ON dr.SatuanNo = sat.SatuanNo
+     {$whereForList}
+     ORDER BY m.nama_menu ASC, u.UkuranNo ASC, b.nama_bahan ASC");
+
+$grouped = []; // ResepNo → UkuranNama → bahan[]
+if ($listRes) {
+    while ($row = mysqli_fetch_assoc($listRes)) {
+        $rNo    = (int)$row['ResepNo'];
+        $ukuran = $row['nama_ukuran'] ?? '-';
+        $grouped[$rNo][$ukuran][] = $row;
+    }
+}
 ?>
 <!doctype html>
 <html lang="id">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Detail Resep — Tambah</title>
+    <title>Detail Resep</title>
     <link rel="stylesheet" href="../../assets/css/main.css">
     <link rel="stylesheet" href="../../assets/css/components.css">
     <link rel="stylesheet" href="../../assets/css/modules.css">
@@ -96,8 +150,6 @@ if ($stokResult) while ($r = mysqli_fetch_assoc($stokResult)) $stokArray[] = $r;
         .bahan-table td { padding:8px; border:1px solid #ddd; vertical-align:middle; }
         .bahan-table select,
         .bahan-table input[type=number] { width:100%; padding:6px; box-sizing:border-box; border:1px solid #d1d5db; border-radius:4px; }
-        .form-header { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
-        @media(max-width:640px){ .form-header { grid-template-columns:1fr; } }
     </style>
 </head>
 <body>
@@ -106,67 +158,52 @@ if ($stokResult) while ($r = mysqli_fetch_assoc($stokResult)) $stokArray[] = $r;
         <main class="main-content module-detail-resep">
             <div class="container">
 
-                <!-- ── FORM TAMBAH ── -->
+<?php if ($selectedResepNo): ?>
+                <!-- ══ MODE FORM: tampil saat tombol "Isi Bahan" ditekan ══ -->
                 <div class="card">
-                    <h2>Tambah Detail Resep</h2>
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+                        <a href="detail_resep_tambah.php"
+                           style="padding:6px 12px;background:#e5e7eb;border-radius:6px;text-decoration:none;color:#374151;font-size:13px;font-weight:600">
+                            ← Kembali
+                        </a>
+                        <h2 style="margin:0">Isi Bahan: <span style="color:#3b82f6"><?php echo htmlspecialchars($selectedMenuNama); ?></span></h2>
+                    </div>
 
                     <?php if ($successMessage): ?>
                         <div class="alert success"><?php echo $successMessage; ?></div>
+                    <?php endif; ?>
+                    <?php if ($warningMessage): ?>
+                        <div style="background:#fefce8;border:1px solid #fde047;color:#713f12;padding:12px 14px;border-radius:6px;margin-bottom:12px;font-size:13px">
+                            ⚠️ <?php echo $warningMessage; ?>
+                        </div>
                     <?php endif; ?>
                     <?php if ($errorMessage): ?>
                         <div class="alert error"><?php echo htmlspecialchars($errorMessage); ?></div>
                     <?php endif; ?>
 
                     <form method="post" action="">
+                        <input type="hidden" name="ResepNo" value="<?php echo $selectedResepNo; ?>">
 
-                        <!-- Resep & Ukuran -->
-                        <div class="form-header">
-                            <div>
-                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-                                    <label for="ResepNo" style="margin:0">Resep (Menu) <span style="color:red">*</span></label>
-                                    <a href="../resep/resep_tambah.php"
-                                       style="font-size:12px;color:#3b82f6;text-decoration:none;font-weight:600">
-                                       + Tambah Resep Baru
-                                    </a>
-                                </div>
-                                <select id="ResepNo" name="ResepNo" class="form-input" required
-                                    <?php echo $selectedResepNo ? 'disabled' : 'onchange="if(this.value) window.location.href=\'detail_resep_tambah.php?ResepNo=\'+this.value"'; ?>>
-                                    <option value="">-- Pilih Resep --</option>
-                                    <?php if ($resepResult): while ($row = mysqli_fetch_assoc($resepResult)): ?>
-                                        <option value="<?php echo $row['ResepNo']; ?>"
-                                            <?php echo ($selectedResepNo == $row['ResepNo']) ? 'selected' : ''; ?>>
-                                            <?php echo htmlspecialchars($row['nama_menu']); ?>
-                                        </option>
-                                    <?php endwhile; endif; ?>
-                                </select>
-                                <?php if ($selectedResepNo): ?>
-                                    <input type="hidden" name="ResepNo" value="<?php echo $selectedResepNo; ?>">
-                                    <a href="detail_resep_tambah.php"
-                                       style="display:inline-block;margin-top:4px;font-size:12px;color:#6b7280;text-decoration:underline">
-                                       ↩ Ganti resep
-                                    </a>
-                                <?php endif; ?>
-                            </div>
-
-                            <div>
-                                <label for="UkuranNo">Ukuran <span style="color:red">*</span></label>
-                                <select id="UkuranNo" name="UkuranNo" class="form-input" required>
-                                    <option value="">-- Pilih Ukuran --</option>
-                                    <?php foreach ($ukuranList as $uid => $uname): ?>
-                                        <option value="<?php echo $uid; ?>"
-                                            <?php echo ($selectedUkuranNo == $uid) ? 'selected' : ''; ?>>
-                                            <?php echo htmlspecialchars($uname); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
+                        <div style="margin-bottom:16px">
+                            <label for="UkuranNo" style="display:block;font-weight:600;margin-bottom:4px">
+                                Ukuran <span style="color:red">*</span>
+                            </label>
+                            <select id="UkuranNo" name="UkuranNo" class="form-input" required style="max-width:300px">
+                                <option value="">-- Pilih Ukuran --</option>
+                                <?php foreach ($ukuranList as $uid => $uname): ?>
+                                    <option value="<?php echo $uid; ?>"
+                                        <?php echo ($selectedUkuranNo == $uid) ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($uname); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
 
                         <!-- Tabel bahan -->
                         <div style="background:#f9fafb;border-radius:6px;padding:16px">
                             <h3 style="margin:0 0 4px">Daftar Bahan</h3>
                             <p style="color:#6b7280;font-size:13px;margin:0 0 14px">
-                                Satuan <strong>otomatis mengikuti satuan stok</strong> — pastikan stok sudah pakai satuan yang benar (gram, ml, dll).
+                                Satuan <strong>otomatis mengikuti satuan stok</strong>.
                             </p>
                             <table class="bahan-table" id="itemsTable">
                                 <thead>
@@ -182,7 +219,7 @@ if ($stokResult) while ($r = mysqli_fetch_assoc($stokResult)) $stokArray[] = $r;
                                         <td>
                                             <select name="StokNo[]" class="stok-select" required>
                                                 <option value="">-- Pilih Bahan --</option>
-                                                <?php foreach ($stokArray as $r): ?>
+                                                <?php foreach ($stokArr as $r): ?>
                                                     <option value="<?php echo $r['StokNo']; ?>"><?php echo htmlspecialchars($r['nama_bahan'] ?? '-'); ?></option>
                                                 <?php endforeach; ?>
                                             </select>
@@ -208,18 +245,13 @@ if ($stokResult) while ($r = mysqli_fetch_assoc($stokResult)) $stokArray[] = $r;
 
                         <div class="form-actions" style="margin-top:20px">
                             <button class="btn" type="submit">Simpan</button>
-                            <a class="btn" href="../resep/resep_tambah.php" style="background:#6b7280">← Kembali</a>
                         </div>
                     </form>
 
                     <script>
-                    const stokOpts = `<?php foreach ($stokArray as $r) echo '<option value="'.$r['StokNo'].'">'.htmlspecialchars($r['nama_bahan']??'-').'</option>'; ?>`;
-
-                    // StokNo → SatuanNo (untuk hidden input value)
-                    const stokToSatuanNo = {<?php foreach ($stokArray as $r) echo '"'.$r['StokNo'].'":'.(int)$r['SatuanNo'].','; ?>};
-
-                    // StokNo → nama_satuan (untuk label tampilan)
-                    const stokToSatuanNama = {<?php foreach ($stokArray as $r) echo '"'.$r['StokNo'].'":"'.addslashes(htmlspecialchars($r['nama_satuan']??'-')).'",'; ?>};
+                    const stokOpts = `<?php foreach ($stokArr as $r) echo '<option value="'.$r['StokNo'].'">'.htmlspecialchars($r['nama_bahan']??'-').'</option>'; ?>`;
+                    const stokToSatuanNo   = {<?php foreach ($stokArr as $r) echo '"'.$r['StokNo'].'":'.(int)$r['SatuanNo'].','; ?>};
+                    const stokToSatuanNama = {<?php foreach ($stokArr as $r) echo '"'.$r['StokNo'].'":"'.addslashes(htmlspecialchars($r['nama_satuan']??'-')).'",'; ?>};
 
                     function newRow() {
                         const tr = document.createElement('tr');
@@ -258,141 +290,146 @@ if ($stokResult) while ($r = mysqli_fetch_assoc($stokResult)) $stokArray[] = $r;
                     </script>
                 </div>
 
-                <!-- ── DAFTAR BAHAN TERSIMPAN ── -->
+                <!-- Bahan yang sudah tersimpan untuk resep ini -->
                 <div class="card" style="margin-top:18px">
-                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-                        <h2 style="margin:0">Daftar Bahan Resep</h2>
-                        <div style="display:flex;gap:8px;align-items:center">
-                            <?php if ($selectedResepNo): ?>
-                                <a href="detail_resep_tambah.php"
-                                   style="font-size:13px;color:#6b7280;text-decoration:underline">
-                                   ☰ Lihat semua
-                                </a>
-                            <?php endif; ?>
-                            <button type="button" id="toggleDaftar"
-                                onclick="
-                                    const el = document.getElementById('daftarContent');
-                                    const open = el.style.display !== 'none';
-                                    el.style.display = open ? 'none' : 'block';
-                                    this.textContent = open ? '▼ Tampilkan' : '▲ Sembunyikan';
-                                "
-                                style="padding:6px 14px;background:#e5e7eb;border:none;border-radius:6px;
-                                       cursor:pointer;font-size:13px;font-weight:600;color:#374151">
-                                ▼ Tampilkan
-                            </button>
-                        </div>
-                    </div>
-                    <div id="daftarContent" style="display:none;margin-top:14px">
-                    <?php
-                    // Query: semua data, atau filter per resep kalau dipilih
-                    $whereClause = $selectedResepNo ? "WHERE dr.ResepNo = {$selectedResepNo}" : '';
-                    $sqlList = "SELECT dr.DetailResepNo, dr.ResepNo,
-                                       m.nama_menu, u.nama_ukuran, u.UkuranNo,
-                                       b.nama_bahan, sat.nama_satuan, dr.jumlah
-                                FROM detail_resep dr
-                                LEFT JOIN resep r    ON dr.ResepNo  = r.ResepNo
-                                LEFT JOIN menu m     ON r.MenuNo    = m.MenuNo
-                                LEFT JOIN ukuran u   ON dr.UkuranNo = u.UkuranNo
-                                LEFT JOIN stok st    ON dr.StokNo   = st.StokNo
-                                LEFT JOIN bahan b    ON st.BahanNo  = b.BahanNo
-                                LEFT JOIN satuan sat ON dr.SatuanNo = sat.SatuanNo
-                                {$whereClause}
-                                ORDER BY m.nama_menu ASC, u.UkuranNo ASC, b.nama_bahan ASC";
-                    $res = mysqli_query($conn, $sqlList);
-
-                    if ($res && mysqli_num_rows($res) > 0):
-                        // Kelompokkan: menu → ukuran → bahan[]
-                        $grouped = [];
-                        while ($row = mysqli_fetch_assoc($res)) {
-                            $menu   = $row['nama_menu']   ?? '-';
-                            $ukuran = $row['nama_ukuran'] ?? '-';
-                            $grouped[$menu][$ukuran][] = $row;
-                        }
-
-                        $menuIdx = 0;
-                        foreach ($grouped as $namaMenu => $ukuranGroup):
-                            $menuIdx++;
-                            $menuId = 'menu-group-' . $menuIdx;
-                            // Default: kalau ada filter resep → buka semua, kalau tidak → tutup semua
-                            $defaultDisplay = $selectedResepNo ? 'block' : 'none';
-                            $defaultArrow   = $selectedResepNo ? '▲' : '▼';
-
-                            // Header menu + tombol toggle
-                            echo '<div style="background:#eff6ff;border-left:4px solid #3b82f6;
-                                              padding:10px 14px;margin:16px 0 0;border-radius:0 6px 6px 0;
-                                              display:flex;justify-content:space-between;align-items:center">';
-                            echo '<strong style="font-size:15px;color:#1e40af">📋 ' . htmlspecialchars($namaMenu) . '</strong>';
-                            echo '<button type="button"
-                                    id="btn-' . $menuId . '"
-                                    onclick="
-                                        var el = document.getElementById(\'' . $menuId . '\');
-                                        var open = el.style.display !== \'none\';
-                                        el.style.display = open ? \'none\' : \'block\';
-                                        this.textContent = open ? \'▼\' : \'▲\';
-                                    "
-                                    style="padding:3px 10px;background:#dbeafe;border:1px solid #93c5fd;
-                                           border-radius:4px;cursor:pointer;font-size:13px;color:#1e40af;font-weight:700">
-                                    ' . $defaultArrow . '
-                                </button>';
-                            echo '</div>';
-
-                            echo '<div id="' . $menuId . '" style="display:' . $defaultDisplay . ';margin-bottom:8px">';
-
-                            foreach ($ukuranGroup as $namaUkuran => $bahanList):
-                                echo '<h4 style="margin:10px 0 6px;color:#374151;font-size:13px;font-weight:600">📐 Ukuran: '
-                                    . htmlspecialchars($namaUkuran) . '</h4>';
-                                echo '<table style="width:100%;border-collapse:collapse;margin-bottom:12px">';
-                                echo '<thead><tr style="background:#f3f4f6">';
-                                echo '<th style="padding:7px 8px;text-align:left;border-bottom:1px solid #ddd;font-size:12px">#</th>';
-                                echo '<th style="padding:7px 8px;text-align:left;border-bottom:1px solid #ddd;font-size:12px">Bahan</th>';
-                                echo '<th style="padding:7px 8px;text-align:left;border-bottom:1px solid #ddd;font-size:12px">Satuan</th>';
-                                echo '<th style="padding:7px 8px;text-align:right;border-bottom:1px solid #ddd;font-size:12px">Jumlah</th>';
-                                echo '<th style="padding:7px 8px;text-align:right;border-bottom:1px solid #ddd;font-size:12px">Aksi</th>';
-                                echo '</tr></thead><tbody>';
-
-                                foreach ($bahanList as $idx => $row):
+                    <h3 style="margin:0 0 14px">Bahan Tersimpan — <?php echo htmlspecialchars($selectedMenuNama); ?></h3>
+                    <?php if (!empty($grouped[$selectedResepNo])): ?>
+                        <?php foreach ($grouped[$selectedResepNo] as $namaUkuran => $bahanList): ?>
+                            <h4 style="margin:0 0 6px;color:#374151;font-size:13px;font-weight:600">📐 Ukuran: <?php echo htmlspecialchars($namaUkuran); ?></h4>
+                            <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
+                                <thead><tr style="background:#f3f4f6">
+                                    <th style="padding:7px 8px;text-align:left;border-bottom:1px solid #ddd;font-size:12px">#</th>
+                                    <th style="padding:7px 8px;text-align:left;border-bottom:1px solid #ddd;font-size:12px">Bahan</th>
+                                    <th style="padding:7px 8px;text-align:left;border-bottom:1px solid #ddd;font-size:12px">Satuan</th>
+                                    <th style="padding:7px 8px;text-align:right;border-bottom:1px solid #ddd;font-size:12px">Jumlah</th>
+                                    <th style="padding:7px 8px;text-align:right;border-bottom:1px solid #ddd;font-size:12px">Aksi</th>
+                                </tr></thead>
+                                <tbody>
+                                <?php foreach ($bahanList as $idx => $row):
                                     $id     = $row['DetailResepNo'];
                                     $bahan  = htmlspecialchars($row['nama_bahan']  ?? '-');
                                     $satuan = htmlspecialchars($row['nama_satuan'] ?? '-');
                                     $jumlah = $row['jumlah'] + 0;
-                                    $resepNo = (int) $row['ResepNo'];
-                                    echo "<tr style=\"border-bottom:1px solid #eee\">";
-                                    echo "<td style=\"padding:7px 8px\">" . ($idx + 1) . "</td>";
-                                    echo "<td style=\"padding:7px 8px\"><strong>{$bahan}</strong></td>";
-                                    echo "<td style=\"padding:7px 8px\">{$satuan}</td>";
-                                    echo "<td style=\"padding:7px 8px;text-align:right\">{$jumlah}</td>";
-                                    echo "<td style=\"padding:7px 8px;text-align:right;white-space:nowrap\">";
-                                    echo "<a href=\"detail_resep_edit.php?DetailResepNo={$id}\"
-                                            style=\"padding:4px 8px;font-size:12px;background:#f59e0b;color:white;text-decoration:none;border-radius:4px;margin-right:3px\">Edit</a>";
-                                    echo "<a href=\"detail_resep_delete_bahan.php?ids={$id}&ResepNo={$resepNo}\"
-                                            onclick=\"return confirm('Hapus bahan ini?')\"
-                                            style=\"padding:4px 8px;font-size:12px;background:#ef4444;color:white;text-decoration:none;border-radius:4px\">Hapus</a>";
-                                    echo "</td></tr>";
-                                endforeach;
-
-                                echo '</tbody></table>';
-                            endforeach;
-                            echo '</div>'; // /menu-group
-                        endforeach;
-
-                    else:
-                        echo '<p style="color:#6b7280;text-align:center;padding:20px 0">Belum ada bahan resep yang tersimpan.</p>';
-                    endif;
-                    ?>
-                    </div><!-- /daftarContent -->
+                                    $resepNo = (int)$row['ResepNo'];
+                                ?>
+                                    <tr style="border-bottom:1px solid #eee">
+                                        <td style="padding:7px 8px"><?php echo $idx + 1; ?></td>
+                                        <td style="padding:7px 8px"><strong><?php echo $bahan; ?></strong></td>
+                                        <td style="padding:7px 8px"><?php echo $satuan; ?></td>
+                                        <td style="padding:7px 8px;text-align:right"><?php echo $jumlah; ?></td>
+                                        <td style="padding:7px 8px;text-align:right;white-space:nowrap">
+                                            <a href="detail_resep_edit.php?DetailResepNo=<?php echo $id; ?>"
+                                               style="padding:4px 8px;font-size:12px;background:#f59e0b;color:white;text-decoration:none;border-radius:4px;margin-right:3px">Edit</a>
+                                            <a href="detail_resep_delete_bahan.php?ids=<?php echo $id; ?>&ResepNo=<?php echo $resepNo; ?>"
+                                               onclick="return confirm('Hapus bahan ini?')"
+                                               style="padding:4px 8px;font-size:12px;background:#ef4444;color:white;text-decoration:none;border-radius:4px">Hapus</a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <p style="color:#6b7280;text-align:center;padding:16px 0">Belum ada bahan tersimpan untuk resep ini.</p>
+                    <?php endif; ?>
                 </div>
+
+<?php else: ?>
+                <!-- ══ MODE DAFTAR: tampilan default ══ -->
+                <div class="card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+                        <h2 style="margin:0">Daftar Resep</h2>
+                        <span style="font-size:13px;color:#6b7280"><?php echo count($resepArr); ?> resep terdaftar</span>
+                    </div>
+
+                    <?php if (empty($resepArr)): ?>
+                        <p style="color:#6b7280;text-align:center;padding:24px 0">
+                            Belum ada resep. <a href="../resep/resep_tambah.php" style="color:#3b82f6">+ Tambah Resep</a>
+                        </p>
+                    <?php else: ?>
+                        <?php $idx = 0; foreach ($resepArr as $resepNo => $namaMenu): $idx++; ?>
+                        <div style="border:1px solid #e5e7eb;border-radius:8px;margin-bottom:10px;overflow:hidden">
+                            <!-- Header resep -->
+                            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#f9fafb">
+                                <div style="display:flex;align-items:center;gap:10px">
+                                    <span style="font-size:15px;font-weight:600;color:#1f2937">
+                                        📋 <?php echo htmlspecialchars($namaMenu); ?>
+                                    </span>
+                                    <?php $jumlahBahan = 0;
+                                    if (!empty($grouped[$resepNo])) {
+                                        foreach ($grouped[$resepNo] as $ukList) $jumlahBahan += count($ukList);
+                                    } ?>
+                                    <span style="font-size:12px;color:#6b7280;background:#e5e7eb;padding:2px 8px;border-radius:10px">
+                                        <?php echo $jumlahBahan; ?> bahan
+                                    </span>
+                                </div>
+                                <div style="display:flex;gap:8px;align-items:center">
+                                    <a href="detail_resep_tambah.php?ResepNo=<?php echo $resepNo; ?>"
+                                       style="padding:6px 14px;background:#3b82f6;color:white;text-decoration:none;border-radius:6px;font-size:13px;font-weight:600">
+                                        + Isi Bahan
+                                    </a>
+                                    <button type="button"
+                                        onclick="var el=document.getElementById('detail-<?php echo $resepNo; ?>');var open=el.style.display!=='none';el.style.display=open?'none':'block';this.textContent=open?'▼':'▲';"
+                                        style="padding:5px 10px;background:#e5e7eb;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700;color:#374151">
+                                        <?php echo !empty($grouped[$resepNo]) ? '▲' : '▼'; ?>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Detail bahan (collapsible) -->
+                            <div id="detail-<?php echo $resepNo; ?>"
+                                 style="display:<?php echo !empty($grouped[$resepNo]) ? 'block' : 'none'; ?>;padding:12px 16px;border-top:1px solid #e5e7eb">
+                                <?php if (!empty($grouped[$resepNo])): ?>
+                                    <?php foreach ($grouped[$resepNo] as $namaUkuran => $bahanList): ?>
+                                        <p style="font-size:12px;font-weight:600;color:#6b7280;margin:8px 0 4px">
+                                            📐 Ukuran: <?php echo htmlspecialchars($namaUkuran); ?>
+                                        </p>
+                                        <table style="width:100%;border-collapse:collapse;margin-bottom:10px">
+                                            <thead><tr style="background:#f3f4f6">
+                                                <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ddd;font-size:12px">#</th>
+                                                <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ddd;font-size:12px">Bahan</th>
+                                                <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ddd;font-size:12px">Satuan</th>
+                                                <th style="padding:6px 8px;text-align:right;border-bottom:1px solid #ddd;font-size:12px">Jumlah</th>
+                                                <th style="padding:6px 8px;text-align:right;border-bottom:1px solid #ddd;font-size:12px">Aksi</th>
+                                            </tr></thead>
+                                            <tbody>
+                                            <?php foreach ($bahanList as $bi => $row):
+                                                $id     = $row['DetailResepNo'];
+                                                $bahan  = htmlspecialchars($row['nama_bahan']  ?? '-');
+                                                $satuan = htmlspecialchars($row['nama_satuan'] ?? '-');
+                                                $jumlah = $row['jumlah'] + 0;
+                                            ?>
+                                                <tr style="border-bottom:1px solid #f0f0f0">
+                                                    <td style="padding:6px 8px;font-size:13px"><?php echo $bi + 1; ?></td>
+                                                    <td style="padding:6px 8px;font-size:13px"><strong><?php echo $bahan; ?></strong></td>
+                                                    <td style="padding:6px 8px;font-size:13px"><?php echo $satuan; ?></td>
+                                                    <td style="padding:6px 8px;font-size:13px;text-align:right"><?php echo $jumlah; ?></td>
+                                                    <td style="padding:6px 8px;text-align:right;white-space:nowrap">
+                                                        <a href="detail_resep_edit.php?DetailResepNo=<?php echo $id; ?>"
+                                                           style="padding:3px 8px;font-size:12px;background:#f59e0b;color:white;text-decoration:none;border-radius:4px;margin-right:3px">Edit</a>
+                                                        <a href="detail_resep_delete_bahan.php?ids=<?php echo $id; ?>&ResepNo=<?php echo $resepNo; ?>"
+                                                           onclick="return confirm('Hapus bahan ini?')"
+                                                           style="padding:3px 8px;font-size:12px;background:#ef4444;color:white;text-decoration:none;border-radius:4px">Hapus</a>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                            </tbody>
+                                        </table>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <p style="color:#9ca3af;font-size:13px;margin:0;padding:8px 0">
+                                        Belum ada bahan — klik <strong>+ Isi Bahan</strong> untuk menambahkan.
+                                    </p>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+<?php endif; ?>
 
             </div>
         </main>
     </div>
-    <?php if ($selectedResepNo): ?>
-    <script>
-        // Kalau sudah ada resep dipilih, buka daftar otomatis
-        document.addEventListener('DOMContentLoaded', function () {
-            document.getElementById('daftarContent').style.display = 'block';
-            document.getElementById('toggleDaftar').textContent = '▲ Sembunyikan';
-        });
-    </script>
-    <?php endif; ?>
 </body>
 </html>
