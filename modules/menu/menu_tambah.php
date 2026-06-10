@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../../config/database.php';
 
 // Handle form submit for insert
@@ -11,18 +11,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($nama_menu)) {
         $errorMessage = 'Nama menu harus diisi.';
     } else {
-        $stmt = mysqli_prepare($conn, "INSERT INTO menu (nama_menu) VALUES (?)");
-        if (!$stmt) {
-            $errorMessage = 'Prepare gagal: ' . mysqli_error($conn);
+        $cek = mysqli_prepare($conn, "SELECT MenuNo FROM menu WHERE nama_menu = ? LIMIT 1");
+        mysqli_stmt_bind_param($cek, 's', $nama_menu);
+        mysqli_stmt_execute($cek);
+        mysqli_stmt_store_result($cek);
+        $sudahAda = mysqli_stmt_num_rows($cek) > 0;
+        mysqli_stmt_close($cek);
+
+        if ($sudahAda) {
+            $errorMessage = 'Menu <strong>' . htmlspecialchars($nama_menu) . '</strong> sudah ada. Gunakan nama yang berbeda atau edit menu yang sudah ada.';
         } else {
-            mysqli_stmt_bind_param($stmt, 's', $nama_menu);
-            if (mysqli_stmt_execute($stmt)) {
-                $successMessage = 'Menu berhasil ditambahkan.';
-                $_POST = [];
+            $stmt = mysqli_prepare($conn, "INSERT INTO menu (nama_menu) VALUES (?)");
+            if (!$stmt) {
+                $errorMessage = 'Prepare gagal: ' . mysqli_error($conn);
             } else {
-                $errorMessage = 'Gagal menyimpan: ' . mysqli_stmt_error($stmt);
+                mysqli_stmt_bind_param($stmt, 's', $nama_menu);
+                if (mysqli_stmt_execute($stmt)) {
+                    $successMessage = 'Menu berhasil ditambahkan.';
+                    $_POST = [];
+                } else {
+                    $errorMessage = 'Gagal menyimpan: ' . mysqli_stmt_error($stmt);
+                }
+                mysqli_stmt_close($stmt);
             }
-            mysqli_stmt_close($stmt);
         }
     }
 }
@@ -48,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 						<div class="alert success"><?php echo htmlspecialchars($successMessage); ?></div>
 					<?php endif; ?>
 					<?php if ($errorMessage): ?>
-						<div class="alert error"><?php echo htmlspecialchars($errorMessage); ?></div>
+						<div class="alert error"><?php echo $errorMessage; ?></div>
 					<?php endif; ?>
 					
 					<form method="post" action="">
