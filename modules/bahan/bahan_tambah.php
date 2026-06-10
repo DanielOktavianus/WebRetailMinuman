@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 					<form method="post" action="">
 						<div class="mt-12">
 							<label for="nama_bahan">Nama Bahan</label>
-							<input id="nama_bahan" name="nama_bahan" class="form-input" type="text" required placeholder="Contoh: Beras, Telur, Bawang Merah, Minyak" value="<?php echo isset($_POST['nama_bahan']) ? htmlspecialchars($_POST['nama_bahan']) : ''; ?>">
+							<input id="nama_bahan" name="nama_bahan" class="form-input" type="text" required value="<?php echo isset($_POST['nama_bahan']) ? htmlspecialchars($_POST['nama_bahan']) : ''; ?>">
 						</div>
 						<div class="form-actions">
 							<button class="btn" type="submit">Simpan</button>

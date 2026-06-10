@@ -50,7 +50,7 @@ if ($BahanNo > 0) {
 							
 							<div class="mt-12">
 								<label for="nama_bahan">Nama Bahan</label>
-								<input id="nama_bahan" name="nama_bahan" class="form-input" type="text" required placeholder="Contoh: Beras, Telur, Bawang Merah, Minyak" value="<?php echo htmlspecialchars($bahan['nama_bahan']); ?>">
+								<input id="nama_bahan" name="nama_bahan" class="form-input" type="text" required value="<?php echo htmlspecialchars($bahan['nama_bahan']); ?>">
 							</div>
 
 							<div class="form-actions">
