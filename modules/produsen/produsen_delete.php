@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../helpers/auth_helper.php';
 
@@ -42,7 +42,7 @@ try {
     if (!mysqli_stmt_execute($stmt3)) throw new Exception('Delete produsen gagal: ' . mysqli_stmt_error($stmt3));
     mysqli_stmt_close($stmt3);
     
-    header('Location: produsen_list.php');
+    header('Location: produsen_list.php?deleted=1');
     exit;
 } catch (Exception $e) {
     die('Error saat menghapus produsen: ' . htmlspecialchars($e->getMessage()));

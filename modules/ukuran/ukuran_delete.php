@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../../config/database.php';
 
 $UkuranNo = isset($_GET['UkuranNo']) && is_numeric($_GET['UkuranNo']) ? (int) $_GET['UkuranNo'] : null;
@@ -26,6 +26,6 @@ mysqli_stmt_bind_param($stmt, 'i', $UkuranNo);
 mysqli_stmt_execute($stmt);
 mysqli_stmt_close($stmt);
 
-header('Location: ukuran_tambah.php');
+header('Location: ukuran_tambah.php?deleted=1');
 exit;
 ?>

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../../config/database.php';
 
 $metode_pembayaranNo = isset($_GET['metode_pembayaranNo']) && is_numeric($_GET['metode_pembayaranNo']) ? (int) $_GET['metode_pembayaranNo'] : null;
@@ -14,7 +14,7 @@ mysqli_stmt_bind_param($stmt, 'i', $metode_pembayaranNo);
 $ok = mysqli_stmt_execute($stmt);
 mysqli_stmt_close($stmt);
 
-header('Location: metode_tambah.php');
+header('Location: metode_tambah.php?deleted=1');
 exit;
 
 ?>

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../../config/database.php';
 
 $DetailResepNo = isset($_GET['DetailResepNo']) ? (int) $_GET['DetailResepNo'] : 0;
@@ -24,12 +24,12 @@ if ($DetailResepNo > 0) {
                 mysqli_stmt_close($deleteStmt);
             }
             
-            header('Location: detail_resep_tambah.php?ResepNo=' . $ResepNo);
+            header('Location: detail_resep_tambah.php?ResepNo=' . $ResepNo . '&deleted=1');
             exit();
         }
     }
 }
 
-header('Location: detail_resep_tambah.php');
+header('Location: detail_resep_tambah.php?deleted=1');
 exit();
 ?>

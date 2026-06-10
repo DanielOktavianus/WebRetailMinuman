@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../../config/database.php';
 
 if (!isset($_GET['SatuanNo']) || !is_numeric($_GET['SatuanNo'])) {
@@ -30,7 +30,7 @@ try {
     if (!mysqli_stmt_execute($stmt3)) throw new Exception('Delete satuan gagal: ' . mysqli_stmt_error($stmt3));
     mysqli_stmt_close($stmt3);
     
-    header('Location: satuan_tambah.php');
+    header('Location: satuan_tambah.php?deleted=1');
     exit;
 } catch (Exception $e) {
     die('Error saat menghapus satuan: ' . htmlspecialchars($e->getMessage()));

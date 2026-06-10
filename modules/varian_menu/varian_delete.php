@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../../config/database.php';
 
 $VarianMenuNo = isset($_GET['VarianMenuNo']) && is_numeric($_GET['VarianMenuNo']) ? (int) $_GET['VarianMenuNo'] : null;
@@ -23,7 +23,7 @@ try {
     if (!mysqli_stmt_execute($stmt2)) throw new Exception('Delete varian_menu gagal: ' . mysqli_stmt_error($stmt2));
     mysqli_stmt_close($stmt2);
     
-    header('Location: varian_tambah.php');
+    header('Location: varian_tambah.php?deleted=1');
     exit;
 } catch (Exception $e) {
     die('Error saat menghapus varian menu: ' . htmlspecialchars($e->getMessage()));

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../../config/database.php';
 
 // Ambil dan validasi daftar IDs (comma-separated integer)
@@ -48,7 +48,7 @@ if ($stmtDel) {
 }
 
 // Redirect kembali ke halaman detail resep
-$backUrl = 'detail_resep_tambah.php' . ($ResepNo ? '?ResepNo=' . $ResepNo : '');
+$backUrl = 'detail_resep_tambah.php' . ($ResepNo ? '?ResepNo=' . $ResepNo . '&deleted=1' : '?deleted=1');
 header('Location: ' . $backUrl);
 exit;
 ?>

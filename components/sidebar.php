@@ -411,5 +411,20 @@ $username = getUsername();
     </div>
 </div>
 <script>window.APP_BASE = "<?php echo defined('APP_BASE') ? APP_BASE : '/SKRIPSIS8'; ?>";</script>
+<script>
+(function(){
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('deleted') === '1') {
+        const toast = document.createElement('div');
+        toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#10b981;color:white;padding:14px 20px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.18);font-size:14px;font-weight:600;z-index:99999;display:flex;align-items:center;gap:8px;transition:opacity .4s';
+        toast.innerHTML = '<span style="font-size:18px">✓</span> Data berhasil dihapus';
+        document.body.appendChild(toast);
+        params.delete('deleted');
+        const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+        history.replaceState({}, '', newUrl);
+        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 3000);
+    }
+})();
+</script>
 <script src="<?php echo (defined('APP_BASE') ? APP_BASE : '/SKRIPSIS8'); ?>/assets/js/pwa.js"></script>
 

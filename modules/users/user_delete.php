@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../helpers/auth_helper.php';
 
@@ -17,7 +17,7 @@ mysqli_stmt_bind_param($stmt, 'i', $usernameNo);
 $ok = mysqli_stmt_execute($stmt);
 mysqli_stmt_close($stmt);
 
-header('Location: user_tambah.php');
+header('Location: user_tambah.php?deleted=1');
 exit;
 
 ?>

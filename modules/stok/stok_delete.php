@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../../config/database.php';
 
 if (!isset($_GET['StokNo']) || !is_numeric($_GET['StokNo'])) {
@@ -23,7 +23,7 @@ try {
     if (!mysqli_stmt_execute($stmt2)) throw new Exception('Delete stok gagal: ' . mysqli_stmt_error($stmt2));
     mysqli_stmt_close($stmt2);
     
-    header('Location: stok_tambah.php');
+    header('Location: stok_tambah.php?deleted=1');
     exit;
 } catch (Exception $e) {
     die('Error saat menghapus stok: ' . htmlspecialchars($e->getMessage()));
