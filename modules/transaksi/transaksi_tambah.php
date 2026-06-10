@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../helpers/format_helper.php';
 
 $successMessage = '';
 $errorMessage   = '';
+$warningStok    = [];
 $missingList    = []; // menu yang belum punya resep/bahan
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -109,6 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             // ── TRANSAKSI ATOMIK ────────────────────────────────────────────
+            $deductedStokNos = [];
             mysqli_begin_transaction($conn);
             try {
                 // 1. INSERT transaksi
@@ -178,6 +180,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 mysqli_stmt_bind_param($stmtKurang, 'di', $totalPakai, $bahan['StokNo']);
                                 if (!mysqli_stmt_execute($stmtKurang)) throw new Exception('Update stok gagal: ' . mysqli_stmt_error($stmtKurang));
                                 mysqli_stmt_close($stmtKurang);
+                                $deductedStokNos[] = (int)$bahan['StokNo'];
                             }
                             mysqli_stmt_close($stmtBahan);
                         }
@@ -186,6 +189,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 mysqli_commit($conn);
                 $successMessage = 'Transaksi #' . $newTransaksiNo . ' berhasil disimpan (' . count($items) . ' item). Stok telah dikurangi.';
+
+                // Cek bahan yang kini di bawah batas minimum
+                if (!empty($deductedStokNos)) {
+                    $inList = implode(',', array_unique($deductedStokNos));
+                    $warnQ  = mysqli_query($conn,
+                        "SELECT b.nama_bahan, s.jumlah_stok, s.batas_minimum
+                         FROM stok s LEFT JOIN bahan b ON s.BahanNo = b.BahanNo
+                         WHERE s.StokNo IN ({$inList}) AND s.jumlah_stok < s.batas_minimum
+                         ORDER BY s.jumlah_stok ASC");
+                    if ($warnQ) while ($w = mysqli_fetch_assoc($warnQ)) {
+                        $warningStok[] = htmlspecialchars($w['nama_bahan'])
+                            . ' (sisa: ' . ($w['jumlah_stok'] + 0) . ', min: ' . ($w['batas_minimum'] + 0) . ')';
+                    }
+                }
                 $_POST = [];
 
             } catch (Exception $e) {
@@ -359,6 +376,17 @@ if ($_vQ) while ($r = mysqli_fetch_assoc($_vQ)) $varianArr[] = $r;
                     <?php if ($successMessage): ?>
                         <div class="alert success" style="background:#d1fae5;padding:10px;border-radius:4px;color:#065f46;margin-bottom:12px">
                             <?php echo htmlspecialchars($successMessage); ?>
+                        </div>
+                    <?php endif; ?>
+                    <?php if (!empty($warningStok)): ?>
+                        <div style="background:#fefce8;border:1px solid #fde047;border-radius:6px;padding:12px 14px;color:#713f12;margin-bottom:12px;font-size:13px">
+                            <strong>⚠️ Peringatan Stok Rendah:</strong>
+                            <ul style="margin:6px 0 0;padding-left:20px">
+                                <?php foreach ($warningStok as $ws): ?>
+                                    <li><?php echo $ws; ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                            <p style="margin:6px 0 0">Segera lakukan restock untuk bahan di atas.</p>
                         </div>
                     <?php endif; ?>
                     <?php if (!empty($missingList)): ?>

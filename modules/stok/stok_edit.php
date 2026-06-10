@@ -106,7 +106,7 @@ $satuanResult = mysqli_query($conn, "SELECT SatuanNo, nama_satuan FROM satuan OR
 							<div class="row mt-12">
 								<div>
 									<label for="batas_minimum">Batas Minimum</label>
-									<input id="batas_minimum" name="batas_minimum" class="form-input" type="number" step="0.01" required placeholder="Contoh: 5, 10.5, 100" value="<?php echo htmlspecialchars($stok['batas_minimum']); ?>">
+									<input id="batas_minimum" name="batas_minimum" class="form-input" type="number" step="0.01" required placeholder="Contoh: 5, 10, 100" value="<?php echo htmlspecialchars($stok['batas_minimum']); ?>">
 								</div>
 							</div>
 

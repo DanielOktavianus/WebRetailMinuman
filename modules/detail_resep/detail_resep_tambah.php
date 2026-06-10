@@ -347,20 +347,41 @@ if ($listRes) {
                             Belum ada resep. <a href="../resep/resep_tambah.php" style="color:#3b82f6">+ Tambah Resep</a>
                         </p>
                     <?php else: ?>
-                        <?php $idx = 0; foreach ($resepArr as $resepNo => $namaMenu): $idx++; ?>
-                        <div style="border:1px solid #e5e7eb;border-radius:8px;margin-bottom:10px;overflow:hidden">
-                            <!-- Header resep -->
+
+                    <!-- Tombol Filter -->
+                    <div style="display:flex;gap:8px;margin-bottom:16px">
+                        <button onclick="filterResep('semua')" id="tab-semua"
+                            style="padding:7px 18px;border-radius:20px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:#3b82f6;color:white">
+                            Semua <span id="count-semua">(<?php echo count($resepArr); ?>)</span>
+                        </button>
+                        <button onclick="filterResep('diisi')" id="tab-diisi"
+                            style="padding:7px 18px;border-radius:20px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:#e5e7eb;color:#374151">
+                            Sudah Diisi <span id="count-diisi"></span>
+                        </button>
+                        <button onclick="filterResep('belum')" id="tab-belum"
+                            style="padding:7px 18px;border-radius:20px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:#e5e7eb;color:#374151">
+                            Belum Diisi <span id="count-belum"></span>
+                        </button>
+                    </div>
+
+                    <!-- Daftar Resep -->
+                    <?php foreach ($resepArr as $resepNo => $namaMenu):
+                        $jumlahBahan = 0;
+                        if (!empty($grouped[$resepNo]))
+                            foreach ($grouped[$resepNo] as $ukList) $jumlahBahan += count($ukList);
+                        $hasDetail = !empty($grouped[$resepNo]);
+                        $status    = $hasDetail ? 'diisi' : 'belum';
+                    ?>
+                        <div class="resep-row" data-status="<?php echo $status; ?>"
+                             style="border:1px solid #e5e7eb;border-radius:8px;margin-bottom:10px;overflow:hidden">
                             <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#f9fafb">
                                 <div style="display:flex;align-items:center;gap:10px">
                                     <span style="font-size:15px;font-weight:600;color:#1f2937">
                                         📋 <?php echo htmlspecialchars($namaMenu); ?>
                                     </span>
-                                    <?php $jumlahBahan = 0;
-                                    if (!empty($grouped[$resepNo])) {
-                                        foreach ($grouped[$resepNo] as $ukList) $jumlahBahan += count($ukList);
-                                    } ?>
-                                    <span style="font-size:12px;color:#6b7280;background:#e5e7eb;padding:2px 8px;border-radius:10px">
-                                        <?php echo $jumlahBahan; ?> bahan
+                                    <span style="font-size:12px;padding:2px 8px;border-radius:10px;
+                                        <?php echo $hasDetail ? 'color:#16a34a;background:#dcfce7' : 'color:#b45309;background:#fef3c7'; ?>">
+                                        <?php echo $hasDetail ? $jumlahBahan . ' bahan' : 'Belum diisi'; ?>
                                     </span>
                                 </div>
                                 <div style="display:flex;gap:8px;align-items:center">
@@ -368,62 +389,78 @@ if ($listRes) {
                                        style="padding:6px 14px;background:#3b82f6;color:white;text-decoration:none;border-radius:6px;font-size:13px;font-weight:600">
                                         + Isi Bahan
                                     </a>
+                                    <?php if ($hasDetail): ?>
                                     <button type="button"
                                         onclick="var el=document.getElementById('detail-<?php echo $resepNo; ?>');var open=el.style.display!=='none';el.style.display=open?'none':'block';this.textContent=open?'▼':'▲';"
-                                        style="padding:5px 10px;background:#e5e7eb;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700;color:#374151">
-                                        <?php echo !empty($grouped[$resepNo]) ? '▲' : '▼'; ?>
-                                    </button>
+                                        style="padding:5px 10px;background:#e5e7eb;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700;color:#374151">▲</button>
+                                    <?php endif; ?>
                                 </div>
                             </div>
-
-                            <!-- Detail bahan (collapsible) -->
-                            <div id="detail-<?php echo $resepNo; ?>"
-                                 style="display:<?php echo !empty($grouped[$resepNo]) ? 'block' : 'none'; ?>;padding:12px 16px;border-top:1px solid #e5e7eb">
-                                <?php if (!empty($grouped[$resepNo])): ?>
-                                    <?php foreach ($grouped[$resepNo] as $namaUkuran => $bahanList): ?>
-                                        <p style="font-size:12px;font-weight:600;color:#6b7280;margin:8px 0 4px">
-                                            📐 Ukuran: <?php echo htmlspecialchars($namaUkuran); ?>
-                                        </p>
-                                        <table style="width:100%;border-collapse:collapse;margin-bottom:10px">
-                                            <thead><tr style="background:#f3f4f6">
-                                                <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ddd;font-size:12px">#</th>
-                                                <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ddd;font-size:12px">Bahan</th>
-                                                <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ddd;font-size:12px">Satuan</th>
-                                                <th style="padding:6px 8px;text-align:right;border-bottom:1px solid #ddd;font-size:12px">Jumlah</th>
-                                                <th style="padding:6px 8px;text-align:right;border-bottom:1px solid #ddd;font-size:12px">Aksi</th>
-                                            </tr></thead>
-                                            <tbody>
-                                            <?php foreach ($bahanList as $bi => $row):
-                                                $id     = $row['DetailResepNo'];
-                                                $bahan  = htmlspecialchars($row['nama_bahan']  ?? '-');
-                                                $satuan = htmlspecialchars($row['nama_satuan'] ?? '-');
-                                                $jumlah = $row['jumlah'] + 0;
-                                            ?>
-                                                <tr style="border-bottom:1px solid #f0f0f0">
-                                                    <td style="padding:6px 8px;font-size:13px"><?php echo $bi + 1; ?></td>
-                                                    <td style="padding:6px 8px;font-size:13px"><strong><?php echo $bahan; ?></strong></td>
-                                                    <td style="padding:6px 8px;font-size:13px"><?php echo $satuan; ?></td>
-                                                    <td style="padding:6px 8px;font-size:13px;text-align:right"><?php echo $jumlah; ?></td>
-                                                    <td style="padding:6px 8px;text-align:right;white-space:nowrap">
-                                                        <a href="detail_resep_edit.php?DetailResepNo=<?php echo $id; ?>"
-                                                           style="padding:3px 8px;font-size:12px;background:#f59e0b;color:white;text-decoration:none;border-radius:4px;margin-right:3px">Edit</a>
-                                                        <a href="detail_resep_delete_bahan.php?ids=<?php echo $id; ?>&ResepNo=<?php echo $resepNo; ?>"
-                                                           onclick="return confirm('Hapus bahan ini?')"
-                                                           style="padding:3px 8px;font-size:12px;background:#ef4444;color:white;text-decoration:none;border-radius:4px">Hapus</a>
-                                                    </td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                            </tbody>
-                                        </table>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
-                                    <p style="color:#9ca3af;font-size:13px;margin:0;padding:8px 0">
-                                        Belum ada bahan — klik <strong>+ Isi Bahan</strong> untuk menambahkan.
+                            <?php if ($hasDetail): ?>
+                            <div id="detail-<?php echo $resepNo; ?>" style="display:block;padding:12px 16px;border-top:1px solid #e5e7eb">
+                                <?php foreach ($grouped[$resepNo] as $namaUkuran => $bahanList): ?>
+                                    <p style="font-size:12px;font-weight:600;color:#6b7280;margin:8px 0 4px">
+                                        📐 Ukuran: <?php echo htmlspecialchars($namaUkuran); ?>
                                     </p>
-                                <?php endif; ?>
+                                    <table style="width:100%;border-collapse:collapse;margin-bottom:10px">
+                                        <thead><tr style="background:#f3f4f6">
+                                            <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ddd;font-size:12px">#</th>
+                                            <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ddd;font-size:12px">Bahan</th>
+                                            <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ddd;font-size:12px">Satuan</th>
+                                            <th style="padding:6px 8px;text-align:right;border-bottom:1px solid #ddd;font-size:12px">Jumlah</th>
+                                            <th style="padding:6px 8px;text-align:right;border-bottom:1px solid #ddd;font-size:12px">Aksi</th>
+                                        </tr></thead>
+                                        <tbody>
+                                        <?php foreach ($bahanList as $bi => $row):
+                                            $id     = $row['DetailResepNo'];
+                                            $bahan  = htmlspecialchars($row['nama_bahan']  ?? '-');
+                                            $satuan = htmlspecialchars($row['nama_satuan'] ?? '-');
+                                            $jumlah = $row['jumlah'] + 0;
+                                            $rNo    = (int)$row['ResepNo'];
+                                        ?>
+                                            <tr style="border-bottom:1px solid #f0f0f0">
+                                                <td style="padding:6px 8px;font-size:13px"><?php echo $bi + 1; ?></td>
+                                                <td style="padding:6px 8px;font-size:13px"><strong><?php echo $bahan; ?></strong></td>
+                                                <td style="padding:6px 8px;font-size:13px"><?php echo $satuan; ?></td>
+                                                <td style="padding:6px 8px;font-size:13px;text-align:right"><?php echo $jumlah; ?></td>
+                                                <td style="padding:6px 8px;text-align:right;white-space:nowrap">
+                                                    <a href="detail_resep_edit.php?DetailResepNo=<?php echo $id; ?>"
+                                                       style="padding:3px 8px;font-size:12px;background:#f59e0b;color:white;text-decoration:none;border-radius:4px;margin-right:3px">Edit</a>
+                                                    <a href="detail_resep_delete_bahan.php?ids=<?php echo $id; ?>&ResepNo=<?php echo $rNo; ?>"
+                                                       onclick="return confirm('Hapus bahan ini?')"
+                                                       style="padding:3px 8px;font-size:12px;background:#ef4444;color:white;text-decoration:none;border-radius:4px">Hapus</a>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                <?php endforeach; ?>
                             </div>
+                            <?php endif; ?>
                         </div>
-                        <?php endforeach; ?>
+                    <?php endforeach; ?>
+
+                    <script>
+                    function filterResep(filter) {
+                        const rows   = document.querySelectorAll('.resep-row');
+                        let cntDiisi = 0, cntBelum = 0;
+                        rows.forEach(r => {
+                            const s = r.dataset.status;
+                            if (s === 'diisi') cntDiisi++;
+                            else cntBelum++;
+                            r.style.display = (filter === 'semua' || r.dataset.status === filter) ? '' : 'none';
+                        });
+                        document.getElementById('count-diisi').textContent = '(' + cntDiisi + ')';
+                        document.getElementById('count-belum').textContent = '(' + cntBelum + ')';
+                        ['semua','diisi','belum'].forEach(t => {
+                            const btn = document.getElementById('tab-' + t);
+                            btn.style.background = t === filter ? '#3b82f6' : '#e5e7eb';
+                            btn.style.color      = t === filter ? 'white'   : '#374151';
+                        });
+                    }
+                    filterResep('semua');
+                    </script>
+
                     <?php endif; ?>
                 </div>
 <?php endif; ?>

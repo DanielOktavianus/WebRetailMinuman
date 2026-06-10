@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $SatuanNo = isset($_POST['SatuanNo']) && is_numeric($_POST['SatuanNo']) ? (int) $_POST['SatuanNo'] : null;
     $jumlah_stok = isset($_POST['jumlah_stok']) && is_numeric($_POST['jumlah_stok']) ? (int) $_POST['jumlah_stok'] : null;
     $batas_minimum = isset($_POST['batas_minimum']) && is_numeric($_POST['batas_minimum']) ? (float) $_POST['batas_minimum'] : null;
-    
+
     if ($BahanNo === null || $SatuanNo === null || $jumlah_stok === null || $batas_minimum === null) {
         $errorMessage = 'Bahan, Satuan, Jumlah Stok, dan Batas Minimum harus diisi.';
     } else {
@@ -130,7 +130,7 @@ $satuanResult = mysqli_query($conn, "SELECT SatuanNo, nama_satuan FROM satuan OR
 						<div class="row mt-12">
 							<div>
 								<label for="batas_minimum">Batas Minimum</label>
-								<input id="batas_minimum" name="batas_minimum" class="form-input" type="number" step="0.01" required placeholder="Contoh: 5, 10.5, 100" value="<?php echo isset($_POST['batas_minimum']) ? htmlspecialchars($_POST['batas_minimum']) : ''; ?>">
+								<input id="batas_minimum" name="batas_minimum" class="form-input" type="number" step="0.01" required placeholder="Contoh: 5, 10, 100" value="<?php echo isset($_POST['batas_minimum']) ? htmlspecialchars($_POST['batas_minimum']) : ''; ?>">
 							</div>
 						</div>
 
