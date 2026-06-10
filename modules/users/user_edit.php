@@ -72,7 +72,7 @@ $karyawanResult = mysqli_query($conn, "SELECT karyawanNo, nama FROM karyawan ORD
 						<label for="role">Role</label>
 						<select id="role" name="role" class="form-input" required>
 							<option value="karyawan" <?php echo ($row['role'] === 'karyawan') ? 'selected' : ''; ?>>Karyawan (Limited Access)</option>
-							<option value="admin" <?php echo ($row['role'] === 'admin') ? 'selected' : ''; ?>>Admin (Full Access)</option>
+							<option value="admin" <?php echo ($row['role'] === 'admin') ? 'selected' : ''; ?>>Pemilik (Full Access)</option>
 						</select>
 					</div>
 							<button type="submit" class="btn">Simpan</button>

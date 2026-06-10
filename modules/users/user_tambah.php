@@ -97,7 +97,7 @@ $karyawanResult = mysqli_query($conn, "SELECT karyawanNo, nama FROM karyawan ORD
 						<label for="role">Role</label>
 						<select id="role" name="role" class="form-input" required>
 							<option value="karyawan" <?php echo (isset($_POST['role']) && $_POST['role'] === 'karyawan') || !isset($_POST['role']) ? 'selected' : ''; ?>>Karyawan (Limited Access)</option>
-							<option value="admin" <?php echo isset($_POST['role']) && $_POST['role'] === 'admin' ? 'selected' : ''; ?>>Admin (Full Access)</option>
+							<option value="admin" <?php echo isset($_POST['role']) && $_POST['role'] === 'admin' ? 'selected' : ''; ?>>Pemilik (Full Access)</option>
 						</select>
 					</div>
 							<button type="submit" class="btn">Simpan</button>
@@ -125,7 +125,7 @@ $karyawanResult = mysqli_query($conn, "SELECT karyawanNo, nama FROM karyawan ORD
 							$nama_karyawan = htmlspecialchars($row['nama_karyawan']);
 							$jabatan = htmlspecialchars($row['jabatan']);
 							$role = htmlspecialchars($row['role']);
-							$roleBadge = strtoupper($role);
+							$roleBadge = $role === 'admin' ? 'PEMILIK' : strtoupper($role);
 							$roleBg = $role === 'admin' ? '#667eea' : '#10b981';
 							echo "<tr>";
 							echo "<td style=\"padding:8px;vertical-align:top\">" . $i++ . "</td>";

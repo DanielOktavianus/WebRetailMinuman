@@ -114,7 +114,10 @@ $username = getUsername();
 	<div class="brand">
 		Teh Poci Sangka Bulan
 		<div style="font-size: 11px; color: #9ca3af; margin-top: 4px;">
-			<?php echo htmlspecialchars($username) . ' (' . strtoupper($userRole) . ')'; ?>
+			<?php
+			$roleLabel = $userRole === 'admin' ? 'PEMILIK' : strtoupper($userRole);
+			echo htmlspecialchars($username) . ' (' . $roleLabel . ')';
+		?>
 		</div>
 	</div>
 	<nav>
