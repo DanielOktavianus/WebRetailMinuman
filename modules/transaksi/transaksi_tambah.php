@@ -421,7 +421,7 @@ if ($_vQ) while ($r = mysqli_fetch_assoc($_vQ)) $varianArr[] = $r;
 
                         <div class="row mt-12">
                             <div>
-                                <label>Karyawan</label>
+                                <label>Petugas</label>
                                 <input class="form-input" type="text" value="<?php echo htmlspecialchars($karyawanNama); ?>" readonly style="background:#f3f4f6;color:#6b7280;cursor:not-allowed;">
                             </div>
                             <div>
