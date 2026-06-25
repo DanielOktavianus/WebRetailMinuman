@@ -159,113 +159,74 @@ require_once __DIR__ . '/../helpers/format_helper.php';
 						<div class="kpi-label">Perlu restocking</div>
 					</div>
 					
-					<?php
-					// 3. Total Transaksi
-					$totalTransaksi = mysqli_query($conn, "SELECT COUNT(transaksiNo) AS total FROM transaksi");
-					$tt = mysqli_fetch_assoc($totalTransaksi);
-					?>
-					<div class="kpi-card info">
-						<div class="kpi-label">Total Transaksi</div>
-						<div class="kpi-value"><?php echo $tt['total']; ?></div>
-						<div class="kpi-label">Sepanjang masa</div>
-					</div>
-					
-					<?php
-					// 4. Total Menu
-					$totalMenu = mysqli_query($conn, "SELECT COUNT(MenuNo) AS total FROM menu");
-					$tm = mysqli_fetch_assoc($totalMenu);
-					?>
-					<div class="kpi-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
-						<div class="kpi-label">Total Menu</div>
-						<div class="kpi-value"><?php echo $tm['total']; ?></div>
-						<div class="kpi-label">Menu tersedia</div>
-					</div>
-				</div>
+	                    <?php
+                    // 3. Total Transaksi mengikuti filter periode utama
+                    $totalTransaksi = mysqli_query($conn, "SELECT COUNT(t.transaksiNo) AS total FROM transaksi t WHERE 1=1 {$pfWhere}");
+                    $tt = mysqli_fetch_assoc($totalTransaksi);
+                    ?>
+                    <div class="kpi-card info">
+                        <div class="kpi-label">Total Transaksi</div>
+                        <div class="kpi-value"><?php echo $tt['total']; ?></div>
+                        <div class="kpi-label">Periode: <?php echo htmlspecialchars($pfLabel); ?></div>
+                    </div>
+                    
+                    <?php
+                    // 4. Total Menu
+                    $totalMenu = mysqli_query($conn, "SELECT COUNT(MenuNo) AS total FROM menu");
+                    $tm = mysqli_fetch_assoc($totalMenu);
+                    ?>
+                    <div class="kpi-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                        <div class="kpi-label">Total Menu</div>
+                        <div class="kpi-value"><?php echo $tm['total']; ?></div>
+                        <div class="kpi-label">Menu tersedia</div>
+                    </div>
+                </div>
 
-				<!-- Menu Terlaris -->
-				<div class="card">
-					<?php
-					// Filter Menu Terlaris
-					$mf = isset($_GET['mf']) ? $_GET['mf'] : 'semua';
-					$mfLabels = [
-						'semua'  => 'Semua',
-						'hari'   => 'Hari Ini',
-						'minggu' => '7 Hari Terakhir',
-						'3bulan' => '3 Bulan Terakhir',
-						'tahun'  => 'Tahun Ini',
-					];
-					$mfLabel = isset($mfLabels[$mf]) ? $mfLabels[$mf] : 'Semua';
-
-					switch ($mf) {
-						case 'hari':
-							$mfWhere = "AND DATE(t.tanggal) = CURDATE()"; break;
-						case 'minggu':
-							$mfWhere = "AND DATE(t.tanggal) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)"; break;
-						case '3bulan':
-							$mfWhere = "AND DATE(t.tanggal) >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)"; break;
-						case 'tahun':
-							$mfWhere = "AND YEAR(t.tanggal) = YEAR(CURDATE())"; break;
-						default:
-							$mf = 'semua';
-							$mfWhere = '';
-					}
-					?>
-					<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">
-						<h3 class="section-title" style="margin:0">⭐ Menu Terlaris<?php if ($mf !== 'semua') echo ' — <span style="color:#4f46e5">' . htmlspecialchars($mfLabel) . '</span>'; ?></h3>
-						<div style="display:flex;flex-wrap:wrap;gap:6px">
-							<?php foreach ($mfLabels as $key => $lbl):
-								// Preserve other GET params (anchor to same section)
-								$href = '?' . http_build_query(array_merge($_GET, ['mf' => $key])) . '#menu-terlaris';
-								$active = ($mf === $key);
-							?>
-							<a href="<?php echo $href; ?>" style="padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none;
-								<?php echo $active ? 'background:#4f46e5;color:#fff;' : 'background:#e5e7eb;color:#374151;'; ?>">
-								<?php echo $lbl; ?>
-							</a>
-							<?php endforeach; ?>
-						</div>
-					</div>
-					<?php
-					$menuTerlaris = mysqli_query($conn,
-						"SELECT m.nama_menu, u.nama_ukuran,
-						        SUM(dt.jumlah) AS total_terjual,
-						        SUM(dt.jumlah * dt.harga_satuan) AS total_harga
-						 FROM detail_transaksi dt
-						 LEFT JOIN varian_menu vm ON dt.VarianMenuNo = vm.VarianMenuNo
-						 LEFT JOIN menu m          ON vm.MenuNo      = m.MenuNo
-						 LEFT JOIN ukuran u         ON vm.ukuranNo   = u.UkuranNo
-						 LEFT JOIN transaksi t      ON dt.transaksiNo = t.transaksiNo
-						 WHERE 1=1 {$mfWhere}
-						 GROUP BY m.MenuNo, vm.VarianMenuNo
-						 ORDER BY total_terjual DESC
-						 LIMIT 10");
-
-					if ($menuTerlaris && mysqli_num_rows($menuTerlaris) > 0) {
-						echo '<table class="dashboard-table">';
-						echo '<thead><tr>';
-						echo '<th>#</th><th>Menu</th><th>Ukuran</th>';
-						echo '<th style="text-align:right">Total Terjual</th>';
-						echo '<th style="text-align:right">Total Pendapatan</th>';
-						echo '</tr></thead><tbody>';
-						$rank = 1;
-						while ($m = mysqli_fetch_assoc($menuTerlaris)) {
-							$medal = $rank === 1 ? '🥇' : ($rank === 2 ? '🥈' : ($rank === 3 ? '🥉' : $rank));
-							echo '<tr>';
-							echo '<td style="text-align:center;font-weight:bold">' . $medal . '</td>';
-							echo '<td><strong>' . htmlspecialchars($m['nama_menu']) . '</strong></td>';
-							echo '<td>' . htmlspecialchars($m['nama_ukuran'] ?? '-') . '</td>';
-							echo '<td style="text-align:right">' . (int)$m['total_terjual'] . ' item</td>';
-							echo '<td style="text-align:right">' . rupiah($m['total_harga']) . '</td>';
-							echo '</tr>';
-							$rank++;
-						}
-						echo '</tbody></table>';
-					} else {
-						echo '<p style="color:#6b7280;text-align:center;padding:20px 0">Tidak ada data penjualan untuk periode ini.</p>';
-					}
-					?>
-				</div>
-
+                <!-- Menu Terlaris -->
+                <div class="card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+                        <h3 class="section-title" style="margin:0">⭐ Menu Terlaris — <span style="color:#4f46e5"><?php echo htmlspecialchars($pfLabel); ?></span></h3>
+                    </div>
+                    <?php
+                    // Menu Terlaris mengikuti filter periode penjualan utama
+                    $menuTerlaris = mysqli_query($conn,
+                        "SELECT m.nama_menu, u.nama_ukuran,
+                            SUM(dt.jumlah) AS total_terjual,
+                            SUM(dt.jumlah * dt.harga_satuan) AS total_harga
+                         FROM detail_transaksi dt
+                         LEFT JOIN varian_menu vm ON dt.VarianMenuNo = vm.VarianMenuNo
+                         LEFT JOIN menu m          ON vm.MenuNo      = m.MenuNo
+                         LEFT JOIN ukuran u         ON vm.ukuranNo   = u.UkuranNo
+                         LEFT JOIN transaksi t      ON dt.transaksiNo = t.transaksiNo
+                         WHERE 1=1 {$pfWhere}
+                         GROUP BY m.MenuNo, vm.VarianMenuNo
+                         ORDER BY total_terjual DESC
+                         LIMIT 10");
+                    if ($menuTerlaris && mysqli_num_rows($menuTerlaris) > 0) {
+                        echo '<table class="dashboard-table">';
+                        echo '<thead><tr>';
+                        echo '<th>#</th><th>Menu</th><th>Ukuran</th>';
+                        echo '<th style="text-align:right">Total Terjual</th>';
+                        echo '<th style="text-align:right">Total Pendapatan</th>';
+                        echo '</tr></thead><tbody>';
+                        $rank = 1;
+                        while ($m = mysqli_fetch_assoc($menuTerlaris)) {
+                            $medal = $rank === 1 ? '🥇' : ($rank === 2 ? '🥈' : ($rank === 3 ? '🥉' : $rank));
+                            echo '<tr>';
+                            echo '<td style="text-align:center;font-weight:bold">' . $medal . '</td>';
+                            echo '<td><strong>' . htmlspecialchars($m['nama_menu']) . '</strong></td>';
+                            echo '<td>' . htmlspecialchars($m['nama_ukuran'] ?? '-') . '</td>';
+                            echo '<td style="text-align:right">' . (int)$m['total_terjual'] . ' item</td>';
+                            echo '<td style="text-align:right">' . rupiah($m['total_harga']) . '</td>';
+                            echo '</tr>';
+                            $rank++;
+                        }
+                        echo '</tbody></table>';
+                    } else {
+                        echo '<p style="color:#6b7280;text-align:center;padding:20px 0">Tidak ada data penjualan untuk periode ini.</p>';
+                    }
+                    ?>
+                </div>
 				<!-- Stok Rendah -->
 				<div class="card">
 					<h3 class="section-title">⚠️ Stok Rendah (Perhatian)</h3>
