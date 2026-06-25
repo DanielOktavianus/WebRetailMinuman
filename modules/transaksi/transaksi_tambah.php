@@ -229,7 +229,12 @@ $metodeResult   = mysqli_query($conn, "SELECT metode_pembayaranNo, nama_metode F
 $voucherResult  = mysqli_query($conn, "SELECT voucherNo, nama_voucher, nilai_diskon FROM voucher ORDER BY nama_voucher ASC");
 $varianArr = [];
 $_vQ = mysqli_query($conn,
-    "SELECT vm.VarianMenuNo, m.nama_menu, u.nama_ukuran, vm.Harga
+    "SELECT vm.VarianMenuNo, m.nama_menu, u.nama_ukuran, vm.Harga,
+        EXISTS(
+            SELECT 1 FROM resep r
+            JOIN detail_resep dr ON r.ResepNo = dr.ResepNo AND dr.UkuranNo = vm.ukuranNo
+            WHERE r.MenuNo = vm.MenuNo
+        ) AS siap
      FROM varian_menu vm
      LEFT JOIN menu m   ON vm.MenuNo   = m.MenuNo
      LEFT JOIN ukuran u ON vm.ukuranNo = u.UkuranNo
@@ -260,6 +265,9 @@ if ($_vQ) while ($r = mysqli_fetch_assoc($_vQ)) $varianArr[] = $r;
         .menu-card:hover { border-color:#6366f1; background:#eef2ff; transform:translateY(-2px); box-shadow:0 4px 10px rgba(0,0,0,.1); }
         .menu-card:active { transform:translateY(0); }
         .menu-card.in-order { border-color:#10b981; background:#ecfdf5; }
+        .menu-card.disabled { cursor:not-allowed; opacity:.55; background:#f8fafc; }
+        .menu-card.disabled:hover { border-color:#d1d5db; background:#f8fafc; transform:none; box-shadow:none; }
+        .menu-card-unavailable { margin-top:8px; font-size:12px; color:#b91c1c; font-weight:700; }
         .menu-card-name { font-weight:700; font-size:13px; color:#111827; }
         .menu-card-size { font-size:12px; color:#6b7280; margin:2px 0; }
         .menu-card-price { font-size:13px; font-weight:600; color:#6366f1; }
@@ -272,7 +280,8 @@ if ($_vQ) while ($r = mysqli_fetch_assoc($_vQ)) $varianArr[] = $r;
     <script>
         let itemsData = [];
 
-        function addFromCard(varianMenuNo, hargaSatuan, text) {
+        function addFromCard(varianMenuNo, hargaSatuan, text, siap) {
+            if (!siap) return;
             const existing = itemsData.find(i => i.varianMenuNo === varianMenuNo);
             if (existing) {
                 existing.jumlah++;
@@ -461,14 +470,19 @@ if ($_vQ) while ($r = mysqli_fetch_assoc($_vQ)) $varianArr[] = $r;
                                     $vmNo  = (int)   $v['VarianMenuNo'];
                                     $harga = (float) $v['Harga'];
                                     $label = htmlspecialchars($v['nama_menu'] . ' - ' . $v['nama_ukuran']);
+                                    $siap  = !empty($v['siap']);
                                 ?>
-                                <div class="menu-card"
+                                <div class="menu-card<?php echo $siap ? '' : ' disabled'; ?>"
                                      data-id="<?php echo $vmNo; ?>"
-                                     onclick="addFromCard(<?php echo $vmNo; ?>, <?php echo $harga; ?>, '<?php echo addslashes($label); ?>')">
+                                     onclick="addFromCard(<?php echo $vmNo; ?>, <?php echo $harga; ?>, '<?php echo addslashes($label); ?>', <?php echo $siap ? 'true' : 'false'; ?>)">
                                     <div class="menu-card-name"><?php echo htmlspecialchars($v['nama_menu']); ?></div>
                                     <div class="menu-card-size"><?php echo htmlspecialchars($v['nama_ukuran']); ?></div>
                                     <div class="menu-card-price"><?php echo rupiah($harga); ?></div>
-                                    <div class="menu-card-qty"></div>
+                                    <?php if (!$siap): ?>
+                                        <div class="menu-card-unavailable">Belum siap</div>
+                                    <?php else: ?>
+                                        <div class="menu-card-qty"></div>
+                                    <?php endif; ?>
                                 </div>
                                 <?php endforeach; ?>
                             </div>
