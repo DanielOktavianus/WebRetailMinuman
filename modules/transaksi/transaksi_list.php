@@ -58,31 +58,35 @@ require_once __DIR__ . '/../../helpers/format_helper.php';
 					$filter  = isset($_GET['filter']) ? $_GET['filter'] : 'semua';
 					$dari    = isset($_GET['dari'])   && $_GET['dari']   !== '' ? $_GET['dari']   : '';
 					$sampai  = isset($_GET['sampai']) && $_GET['sampai'] !== '' ? $_GET['sampai'] : '';
+					$metodeFilter = isset($_GET['metode']) && $_GET['metode'] !== '' ? (int)$_GET['metode'] : '';
+					$karyawanFilter = isset($_GET['karyawan']) ? trim($_GET['karyawan']) : '';
+					$sortBy = isset($_GET['sort_by']) && in_array($_GET['sort_by'], ['tanggal','total','karyawan','metode'], true) ? $_GET['sort_by'] : 'tanggal';
+					$sortDir = isset($_GET['sort_dir']) && in_array($_GET['sort_dir'], ['asc','desc'], true) ? $_GET['sort_dir'] : 'desc';
 
-					$whereClause = '';
+					$whereConditions = [];
 					$filterLabel = '';
 					switch ($filter) {
 						case 'minggu':
-							$whereClause = "WHERE DATE(t.tanggal) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)";
+							$whereConditions[] = "DATE(t.tanggal) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)";
 							$filterLabel = '7 Hari Terakhir';
 							break;
 						case 'bulan':
-							$whereClause = "WHERE MONTH(t.tanggal) = MONTH(CURDATE()) AND YEAR(t.tanggal) = YEAR(CURDATE())";
+							$whereConditions[] = "MONTH(t.tanggal) = MONTH(CURDATE()) AND YEAR(t.tanggal) = YEAR(CURDATE())";
 							$filterLabel = 'Bulan Ini';
 							break;
 						case '3bulan':
-							$whereClause = "WHERE DATE(t.tanggal) >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)";
+							$whereConditions[] = "DATE(t.tanggal) >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)";
 							$filterLabel = '3 Bulan Terakhir';
 							break;
 						case 'tahun':
-							$whereClause = "WHERE YEAR(t.tanggal) = YEAR(CURDATE())";
+							$whereConditions[] = "YEAR(t.tanggal) = YEAR(CURDATE())";
 							$filterLabel = 'Tahun Ini';
 							break;
 						case 'custom':
 							if ($dari !== '' && $sampai !== '') {
 								$dari_safe   = mysqli_real_escape_string($conn, $dari);
 								$sampai_safe = mysqli_real_escape_string($conn, $sampai);
-								$whereClause = "WHERE DATE(t.tanggal) BETWEEN '{$dari_safe}' AND '{$sampai_safe}'";
+								$whereConditions[] = "DATE(t.tanggal) BETWEEN '{$dari_safe}' AND '{$sampai_safe}'";
 								$filterLabel = $dari . ' s/d ' . $sampai;
 							}
 							break;
@@ -90,6 +94,16 @@ require_once __DIR__ . '/../../helpers/format_helper.php';
 							$filter = 'semua';
 							$filterLabel = 'Semua';
 					}
+
+					if ($metodeFilter !== '') {
+						$whereConditions[] = "t.metode_pembayaranNo = " . (int)$metodeFilter;
+					}
+
+					if ($karyawanFilter !== '') {
+						$whereConditions[] = "t.karyawanNo = " . (int)$karyawanFilter;
+					}
+
+					$whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
 
 					// Tombol filter aktif
 					$btnBase   = 'display:inline-block;padding:8px 14px;border-radius:6px;font-size:13px;font-weight:600;text-decoration:none;border:none;cursor:pointer;margin:0 4px 6px 0;';
@@ -105,44 +119,84 @@ require_once __DIR__ . '/../../helpers/format_helper.php';
 					];
 					echo '<div class="no-print" style="margin-bottom:14px;display:flex;flex-wrap:wrap;align-items:center;gap:4px">';
 					foreach ($filters as $key => $label) {
+						$params = ['filter' => $key];
+						if ($metodeFilter !== '') { $params['metode'] = $metodeFilter; }
+						if ($karyawanFilter !== '') { $params['karyawan'] = $karyawanFilter; }
+						if ($sortBy !== 'tanggal') { $params['sort_by'] = $sortBy; }
+						if ($sortDir !== 'desc') { $params['sort_dir'] = $sortDir; }
+						if ($dari !== '') { $params['dari'] = $dari; }
+						if ($sampai !== '') { $params['sampai'] = $sampai; }
 						$style = ($filter === $key) ? $btnActive : $btnInact;
-						echo "<a href=\"?filter={$key}\" style=\"{$style}\">{$label}</a>";
+						echo "<a href=\"?" . http_build_query($params) . "\" style=\"{$style}\">{$label}</a>";
 					}
 					echo '</div>';
 
-					// Form custom range
-					$customOpen = ($filter === 'custom') ? '' : 'style="display:none"';
-					echo '<form method="get" action="" id="customForm" class="no-print" ' . $customOpen . ' style="background:#f9fafb;padding:12px;border-radius:8px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">';
-					echo '<input type="hidden" name="filter" value="custom">';
+					$metodeResult = mysqli_query($conn, "SELECT metode_pembayaranNo, nama_metode FROM metode_pembayaran ORDER BY nama_metode ASC");
+					$karyawanListResult = mysqli_query($conn, "SELECT karyawanNo, nama FROM karyawan ORDER BY nama ASC");
+
+					echo '<div class="no-print" style="margin-bottom:14px;display:flex;flex-wrap:wrap;align-items:center;gap:10px">';
+					echo '<button type="button" onclick="toggleCustomRange()" style="' . $btnActive . '">📅 Rentang Kustom</button>';
+					if ($filterLabel && $filter !== 'semua') {
+						echo '<span style="font-size:13px;color:#6b7280">Menampilkan: <strong>' . htmlspecialchars($filterLabel) . '</strong></span>';
+					}
+					echo '</div>';
+
+					echo '<form method="get" action="" id="filterForm" class="no-print" style="background:#f9fafb;padding:12px;border-radius:8px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">';
+					echo '<input type="hidden" name="filter" value="' . htmlspecialchars($filter) . '">';
+					echo '<input type="hidden" name="sort_by" value="' . htmlspecialchars($sortBy) . '">';
+					echo '<input type="hidden" name="sort_dir" value="' . htmlspecialchars($sortDir) . '">';
+
+					echo '<div><label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">Metode Pembayaran</label><select name="metode" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;min-width:180px"><option value="">Semua Metode</option>';
+					if ($metodeResult) {
+						while ($mRow = mysqli_fetch_assoc($metodeResult)) {
+							$selected = ($metodeFilter !== '' && (int)$mRow['metode_pembayaranNo'] === (int)$metodeFilter) ? 'selected' : '';
+							echo '<option value="' . (int)$mRow['metode_pembayaranNo'] . '" ' . $selected . '>' . htmlspecialchars($mRow['nama_metode']) . '</option>';
+						}
+					}
+					echo '</select></div>';
+
+					echo '<div><label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">Nama Karyawan</label><select name="karyawan" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;min-width:180px"><option value="">Semua Karyawan</option>';
+					if ($karyawanListResult) {
+						while ($kRow = mysqli_fetch_assoc($karyawanListResult)) {
+							$selected = ($karyawanFilter !== '' && $kRow['karyawanNo'] == $karyawanFilter) ? 'selected' : '';
+							echo '<option value="' . (int)$kRow['karyawanNo'] . '" ' . $selected . '>' . htmlspecialchars($kRow['nama']) . '</option>';
+						}
+					}
+					echo '</select></div>';
+
+					echo '<div><label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">Urutkan</label><select name="sort_by" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px"><option value="tanggal" ' . (($sortBy === 'tanggal') ? 'selected' : '') . '>Tanggal</option><option value="total" ' . (($sortBy === 'total') ? 'selected' : '') . '>Total</option><option value="karyawan" ' . (($sortBy === 'karyawan') ? 'selected' : '') . '>Karyawan</option><option value="metode" ' . (($sortBy === 'metode') ? 'selected' : '') . '>Metode</option></select></div>';
+					echo '<div><label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">Arah</label><select name="sort_dir" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px"><option value="desc" ' . (($sortDir === 'desc') ? 'selected' : '') . '>Terbaru/terbesar</option><option value="asc" ' . (($sortDir === 'asc') ? 'selected' : '') . '>Terlama/terkecil</option></select></div>';
+					echo '<button type="submit" style="' . $btnActive . 'margin:0">Terapkan</button>';
+
+					echo '<div id="customRangeInputs" style="display:' . ($filter === 'custom' ? 'flex' : 'none') . ';flex-wrap:wrap;gap:10px;width:100%;margin-top:10px">';
 					echo '<div><label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">Dari Tanggal</label>';
 					echo '<input type="date" name="dari" value="' . htmlspecialchars($dari) . '" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px"></div>';
 					echo '<div><label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">Sampai Tanggal</label>';
 					echo '<input type="date" name="sampai" value="' . htmlspecialchars($sampai) . '" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px"></div>';
-					echo '<button type="submit" style="' . $btnActive . 'margin:0">Terapkan</button>';
-					echo '</form>';
-
-					// Tombol Pilih Rentang Kustom (toggle form)
-					$toggleStyle = ($filter === 'custom') ? $btnActive : $btnInact;
-					echo '<div class="no-print" style="margin-bottom:14px">';
-					echo '<button onclick="toggleCustomForm()" style="' . $toggleStyle . '">📅 Rentang Kustom</button>';
-					if ($filterLabel && $filter !== 'semua') {
-						echo '<span style="font-size:13px;color:#6b7280;margin-left:8px">Menampilkan: <strong>' . htmlspecialchars($filterLabel) . '</strong></span>';
-					}
 					echo '</div>';
-					echo '<script>function toggleCustomForm(){var f=document.getElementById("customForm");f.style.display=(f.style.display==="none"||f.style.display===""?"flex":"none");}</script>';
+
+					echo '</form>';
+					echo '<script>function toggleCustomRange(){var f=document.getElementById("customRangeInputs");f.style.display=(f.style.display==="none"||f.style.display===""?"flex":"none");}</script>';
 
 					// Query dengan filter
+					$sortColumn = 't.tanggal';
+					switch ($sortBy) {
+						case 'total': $sortColumn = 't.total_harga'; break;
+						case 'karyawan': $sortColumn = 'k.nama'; break;
+						case 'metode': $sortColumn = 'm.nama_metode'; break;
+						default: $sortColumn = 't.tanggal'; break;
+					}
+					$orderDir = ($sortDir === 'asc') ? 'ASC' : 'DESC';
 					$query = "SELECT t.transaksiNo, t.tanggal, t.total_harga,
-						         COALESCE(k.nama, '-') AS karyawan,
-						         COALESCE(m.nama_metode, '-') AS metode,
-						         COALESCE(v.nama_voucher, '-') AS voucher
+							 COALESCE(k.nama, '-') AS karyawan,
+							 COALESCE(m.nama_metode, '-') AS metode,
+							 COALESCE(v.nama_voucher, '-') AS voucher
 						  FROM transaksi t
 						  LEFT JOIN karyawan k ON t.karyawanNo = k.karyawanNo
 						  LEFT JOIN metode_pembayaran m ON t.metode_pembayaranNo = m.metode_pembayaranNo
 						  LEFT JOIN voucher v ON t.voucherNo = v.voucherNo
 						  {$whereClause}
-						  ORDER BY t.transaksiNo DESC";
-
+						  ORDER BY {$sortColumn} {$orderDir}, t.transaksiNo DESC";
 					$res = mysqli_query($conn, $query);
 					$totalRows = $res ? mysqli_num_rows($res) : 0;
 
