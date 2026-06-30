@@ -165,16 +165,10 @@ require_once __DIR__ . '/../../helpers/format_helper.php';
 					$statQ  = "SELECT COUNT(*) as cnt, COALESCE(SUM(total_harga),0) as total FROM transaksi t {$whereClause}";
 					$statR  = mysqli_query($conn, $statQ);
 					$statRow = $statR ? mysqli_fetch_assoc($statR) : ['cnt' => 0, 'total' => 0];
-					$statPenjualan  = (float)$statRow['total'];
-					$statTransaksi  = (int)$statRow['cnt'];
-
-					$stokQ      = mysqli_query($conn, "SELECT COUNT(*) as cnt FROM stok WHERE jumlah_stok < batas_minimum");
-					$stokRendah = $stokQ ? (int)mysqli_fetch_assoc($stokQ)['cnt'] : 0;
-
-					$menuQ      = mysqli_query($conn, "SELECT COUNT(*) as cnt FROM menu");
-					$totalMenu  = $menuQ ? (int)mysqli_fetch_assoc($menuQ)['cnt'] : 0;
-
-					$periodeLabel = ($filterLabel && $filterLabel !== 'Semua') ? htmlspecialchars($filterLabel) : 'Semua periode';
+					$statPenjualan = (float)$statRow['total'];
+					$statTransaksi = (int)$statRow['cnt'];
+					$statRataRata  = $statTransaksi > 0 ? $statPenjualan / $statTransaksi : 0;
+					$periodeLabel  = ($filterLabel && $filterLabel !== 'Semua') ? htmlspecialchars($filterLabel) : 'Semua periode';
 
 					// Summary boxes (visible on screen & in print)
 					$boxStyle   = 'border:1px solid #d1d5db;border-radius:6px;padding:12px 10px;text-align:center;background:#fff';
@@ -182,10 +176,12 @@ require_once __DIR__ . '/../../helpers/format_helper.php';
 					$valueStyle = 'font-size:18px;font-weight:700;color:#111827;word-break:break-all';
 					$subStyle   = 'font-size:11px;color:#9ca3af;margin-top:2px';
 
-					echo '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">';
+					echo '<div style="margin-bottom:14px">';
+					echo '<div style="font-size:14px;font-weight:700;color:#111827;margin-bottom:8px">Ringkasan Transaksi</div>';
+					echo '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:16px">';
 
 					echo '<div style="' . $boxStyle . '">';
-					echo '<div style="' . $labelStyle . '">Total Penjualan</div>';
+					echo '<div style="' . $labelStyle . '">Total Pendapatan</div>';
 					echo '<div style="' . $valueStyle . '">Rp ' . number_format($statPenjualan, 0, ',', '.') . '</div>';
 					echo '<div style="' . $subStyle . '">' . $periodeLabel . '</div>';
 					echo '</div>';
@@ -197,17 +193,18 @@ require_once __DIR__ . '/../../helpers/format_helper.php';
 					echo '</div>';
 
 					echo '<div style="' . $boxStyle . '">';
-					echo '<div style="' . $labelStyle . '">Stok Rendah</div>';
-					echo '<div style="' . $valueStyle . '">' . $stokRendah . ' bahan</div>';
-					echo '<div style="' . $subStyle . '">Saat ini</div>';
+					echo '<div style="' . $labelStyle . '">Rata-rata per Transaksi</div>';
+					echo '<div style="' . $valueStyle . '">Rp ' . number_format($statRataRata, 0, ',', '.') . '</div>';
+					echo '<div style="' . $subStyle . '">Berdasarkan filter aktif</div>';
 					echo '</div>';
 
 					echo '<div style="' . $boxStyle . '">';
-					echo '<div style="' . $labelStyle . '">Total Menu</div>';
-					echo '<div style="' . $valueStyle . '">' . $totalMenu . ' menu</div>';
-					echo '<div style="' . $subStyle . '">Saat ini</div>';
+					echo '<div style="' . $labelStyle . '">Periode Aktif</div>';
+					echo '<div style="' . $valueStyle . '">' . htmlspecialchars($filterLabel ?: 'Semua') . '</div>';
+					echo '<div style="' . $subStyle . '">' . htmlspecialchars($rangeInfo) . '</div>';
 					echo '</div>';
 
+					echo '</div>';
 					echo '</div>';
 
 					if ($res && $totalRows > 0) {
