@@ -3,9 +3,9 @@ require_once __DIR__ . '/config/app.php';
 header('Content-Type: application/manifest+json');
 $b = APP_BASE;
 echo json_encode([
-    'name'             => 'Teh Poci Sangka Bulan',
-    'short_name'       => 'Teh Poci',
-    'description'      => 'Sistem manajemen restoran Teh Poci Sangka Bulan',
+    'name'             => 'Monitoring Penjualan',
+    'short_name'       => 'Monitoring',
+    'description'      => 'Sistem monitoring penjualan dan stok usaha minuman',
     'start_url'        => $b . '/dashboard/dashboard.php',
     'scope'            => $b . '/',
     'display'          => 'standalone',

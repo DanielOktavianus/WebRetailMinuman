@@ -3,8 +3,8 @@ require_once __DIR__ . '/config/app.php';
 header('Content-Type: application/javascript');
 $b = APP_BASE;
 ?>
-// Service Worker for SKRIPSIS8 PWA (dynamic paths)
-const CACHE_VERSION = 'skripsis8-v3';
+// Service Worker for Monitoring Penjualan PWA (dynamic paths)
+const CACHE_VERSION = 'monitoring-penjualan-v3';
 const BASE = '<?php echo addslashes($b); ?>';
 const CACHE_URLS = [
   BASE + '/',

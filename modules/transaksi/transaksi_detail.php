@@ -96,7 +96,7 @@ require_once __DIR__ . '/../../helpers/format_helper.php';
 						} else {
 							// Header toko
 							echo '<div style="text-align:center;padding:12px 0 16px;border-bottom:2px solid #e5e7eb;margin-bottom:16px">';
-							echo '<strong style="display:block;font-size:20px;color:#1f2937;letter-spacing:0.5px">Teh Poci Sangka Bulan</strong>';
+							echo '<strong style="display:block;font-size:20px;color:#1f2937;letter-spacing:0.5px">Monitoring Penjualan</strong>';
 							echo '<span style="font-size:13px;color:#6b7280">Jl. Sagan No.3 Terban, Gondokusuman, Kota Yogyakarta</span>';
 							echo '<p style="margin:6px 0 0;font-size:12px;color:#9ca3af">No. Transaksi: #' . htmlspecialchars($tx['transaksiNo']) . '</p>';
 							echo '</div>';

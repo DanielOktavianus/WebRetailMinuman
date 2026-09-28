@@ -8,7 +8,7 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once __DIR__ . '/../helpers/auth_helper.php';
 
 // Use absolute paths so links work regardless of include depth.
-$base = defined('APP_BASE') ? APP_BASE : '/SKRIPSIS8';
+$base = defined('APP_BASE') ? APP_BASE : '/WebRetailMinuman';
 
 // Define all links with module mapping for access control
 $allLinks = [
@@ -410,7 +410,7 @@ $username = getUsername();
         </button>
     </div>
 </div>
-<script>window.APP_BASE = "<?php echo defined('APP_BASE') ? APP_BASE : '/SKRIPSIS8'; ?>";</script>
+<script>window.APP_BASE = "<?php echo defined('APP_BASE') ? APP_BASE : '/WebRetailMinuman'; ?>";</script>
 <script>
 (function(){
     const params = new URLSearchParams(window.location.search);
@@ -426,5 +426,5 @@ $username = getUsername();
     }
 })();
 </script>
-<script src="<?php echo (defined('APP_BASE') ? APP_BASE : '/SKRIPSIS8'); ?>/assets/js/pwa.js"></script>
+<script src="<?php echo (defined('APP_BASE') ? APP_BASE : '/WebRetailMinuman'); ?>/assets/js/pwa.js"></script>
 

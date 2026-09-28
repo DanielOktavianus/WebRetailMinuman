@@ -34,7 +34,7 @@ require_once __DIR__ . '/../../helpers/format_helper.php';
 				<div class="card">
 					<!-- Header cetak — hanya muncul saat print -->
 					<div class="print-only" style="text-align:center;padding:12px 0 16px;border-bottom:2px solid #e5e7eb;margin-bottom:16px">
-						<strong style="display:block;font-size:20px;color:#1f2937">Teh Poci Sangka Bulan</strong>
+						<strong style="display:block;font-size:20px;color:#1f2937">Monitoring Penjualan</strong>
 						<span style="font-size:13px;color:#6b7280">Jl. Sagan No.3 Terban, Gondokusuman, Kota Yogyakarta</span>
 						<p style="margin:6px 0 0;font-size:14px;font-weight:600">Rekapan Transaksi</p>
 					</div>

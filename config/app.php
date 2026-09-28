@@ -1,7 +1,7 @@
 <?php
 /**
  * Application base path configuration.
- * Local XAMPP  → '/SKRIPSIS8'
+ * Local XAMPP  → '/WebRetailMinuman'
  * Railway/prod → '' (root)
  */
 if (!defined('APP_BASE')) {

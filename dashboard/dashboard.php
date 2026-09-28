@@ -7,12 +7,12 @@ require_once __DIR__ . '/../helpers/format_helper.php';
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<meta name="description" content="SKRIPSIS8 - Dashboard Manajemen Bisnis Restoran">
+	<meta name="description" content="Monitoring Penjualan - Dashboard manajemen penjualan dan stok usaha minuman">
 	<meta name="theme-color" content="#667eea">
 	<meta name="mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-	<meta name="apple-mobile-web-app-title" content="SKRIPSIS8">
+	<meta name="apple-mobile-web-app-title" content="Monitoring Penjualan">
 	<link rel="manifest" href="<?php echo APP_BASE; ?>/manifest.php">
 	<link rel="icon" type="image/svg+xml" href="../assets/img/icon-192.svg">
 	<link rel="apple-touch-icon" href="../assets/img/icon-192.svg">
