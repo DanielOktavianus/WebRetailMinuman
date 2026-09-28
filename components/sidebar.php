@@ -112,7 +112,7 @@ $username = getUsername();
 
 <aside class="sidebar" id="sidebar">
 	<div class="brand">
-		Teh Poci Sangka Bulan
+		Monitoring Penjualan
 		<div style="font-size: 11px; color: #9ca3af; margin-top: 4px;">
 			<?php
 			$roleLabel = $userRole === 'admin' ? 'PEMILIK' : strtoupper($userRole);
