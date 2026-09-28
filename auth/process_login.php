@@ -6,6 +6,17 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+$demoRole = isset($_POST['demo_role']) ? strtolower(trim($_POST['demo_role'])) : '';
+if (in_array($demoRole, ['admin', 'karyawan'], true)) {
+    $_SESSION['login']      = true;
+    $_SESSION['username']   = $demoRole === 'admin' ? 'Demo Admin' : 'Demo Karyawan';
+    $_SESSION['usernameNo'] = 0;
+    $_SESSION['role']       = $demoRole;
+    $_SESSION['karyawanNo'] = 0;
+    header('Location: ../dashboard/dashboard.php');
+    exit;
+}
+
 // Basic input validation
 $username = isset($_POST['username']) ? trim($_POST['username']) : '';
 $password = isset($_POST['password']) ? $_POST['password'] : '';

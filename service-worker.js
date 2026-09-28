@@ -1,15 +1,15 @@
-// Service Worker for SKRIPSIS8 PWA
-const CACHE_VERSION = 'skripsis8-v2';
-const CACHE_URLS = [
-  '/SKRIPSIS8/',
-  '/SKRIPSIS8/index.php',
-  '/SKRIPSIS8/dashboard/dashboard.php',
-  '/SKRIPSIS8/assets/css/main.css',
-  '/SKRIPSIS8/assets/css/components.css',
-  '/SKRIPSIS8/assets/css/modules.css',
-  '/SKRIPSIS8/assets/js/app.js',
-  '/SKRIPSIS8/assets/js/pwa.js',
-  '/SKRIPSIS8/manifest.json'
+// Service Worker for WebRetailMinuman PWA
+const CACHE_VERSION = 'webretailminuman-v2';
+const CACHE_FILES = [
+  '/WebRetailMinuman/',
+  '/WebRetailMinuman/index.php',
+  '/WebRetailMinuman/dashboard/dashboard.php',
+  '/WebRetailMinuman/assets/css/main.css',
+  '/WebRetailMinuman/assets/css/components.css',
+  '/WebRetailMinuman/assets/css/modules.css',
+  '/WebRetailMinuman/assets/js/app.js',
+  '/WebRetailMinuman/assets/js/pwa.js',
+  '/WebRetailMinuman/manifest.json'
 ];
 
 // Install event - cache resources
@@ -98,7 +98,7 @@ self.addEventListener('fetch', (event) => {
         .catch(() => {
           // Offline fallback
           if (request.destination === 'image') {
-            return caches.match('/SKRIPSIS8/assets/img/icon-192.svg');
+            return caches.match('/WebRetailMinuman/assets/img/icon-192.svg');
           }
           return new Response('Offline: Resource tidak tersedia', { status: 503 });
         });

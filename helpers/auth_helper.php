@@ -4,9 +4,47 @@ require_once __DIR__ . '/../config/app.php';
 // Auth Helper - Role-based Access Control (RBAC)
 
 /**
+ * Temporary public demo mode for recruiter / showcase access.
+ * Enable by setting PUBLIC_DEMO=1 or DEMO_MODE=1 in the environment.
+ */
+function isPublicDemoMode() {
+    $publicDemoEnv = getenv('PUBLIC_DEMO');
+    if ($publicDemoEnv === false && getenv('DEMO_MODE') !== false) {
+        $publicDemoEnv = getenv('DEMO_MODE');
+    }
+
+    $demoEnabled = ($publicDemoEnv === false) ? true : ($publicDemoEnv === '1');
+
+    if (defined('PUBLIC_DEMO')) {
+        $demoEnabled = PUBLIC_DEMO === true || PUBLIC_DEMO === '1' || ($publicDemoEnv === false && !defined('PUBLIC_DEMO'));
+    }
+
+    return $demoEnabled;
+}
+
+function ensureDemoSession() {
+    if (!isPublicDemoMode()) {
+        return;
+    }
+
+    if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
+        $_SESSION['login'] = true;
+        $_SESSION['role'] = 'admin';
+        $_SESSION['username'] = 'Recruiter Demo';
+        $_SESSION['usernameNo'] = 0;
+        $_SESSION['karyawanNo'] = 0;
+    }
+}
+
+/**
  * Check if user is logged in
  */
 function isLoggedIn() {
+    if (isPublicDemoMode()) {
+        ensureDemoSession();
+        return true;
+    }
+
     return isset($_SESSION['login']) && $_SESSION['login'] === true;
 }
 
@@ -15,6 +53,11 @@ function isLoggedIn() {
  * @return string|null - 'admin', 'karyawan', or null
  */
 function getUserRole() {
+    if (isPublicDemoMode()) {
+        ensureDemoSession();
+        return $_SESSION['role'] ?? 'admin';
+    }
+
     return isset($_SESSION['role']) ? $_SESSION['role'] : null;
 }
 
@@ -22,6 +65,11 @@ function getUserRole() {
  * Get current username
  */
 function getUsername() {
+    if (isPublicDemoMode()) {
+        ensureDemoSession();
+        return $_SESSION['username'] ?? 'Recruiter Demo';
+    }
+
     return isset($_SESSION['username']) ? $_SESSION['username'] : null;
 }
 
@@ -48,6 +96,11 @@ function hasAnyRole($roles = []) {
  * Require login - redirect if not logged in
  */
 function requireLogin() {
+    if (isPublicDemoMode()) {
+        ensureDemoSession();
+        return;
+    }
+
     if (!isLoggedIn()) {
         header('Location: ' . APP_BASE . '/auth/login.php');
         exit;
