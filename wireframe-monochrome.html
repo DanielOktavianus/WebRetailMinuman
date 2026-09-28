@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Wireframe Monokrom — Sistem Manajemen Restoran</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,Arial,sans-serif;background:#fff;color:#111;line-height:1.5}
+a{color:#111;text-decoration:none}
+#toc{position:sticky;top:0;background:#f7f7f7;border-bottom:1px solid #ccc;padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px;font-size:13px}
+#toc strong{font-weight:700;margin-right:10px}
+#toc a{padding:6px 10px;border:1px solid #ccc;border-radius:16px;background:#fff}
+.wf-section{padding:24px 20px;max-width:1200px;margin:0 auto}
+.wf-group-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;color:#333}
+.wf-card{border:1px solid #ccc;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 10px 24px rgba(0,0,0,.08);margin-bottom:30px}
+.wf-browser-bar{background:#e7e7e7;padding:10px 14px;display:flex;align-items:center;gap:10px}
+.wf-dot{width:12px;height:12px;border-radius:50%;background:#444}
+.wf-url{flex:1;background:#fff;border:1px solid #ccc;border-radius:6px;padding:5px 10px;font-size:12px;color:#222;font-family:monospace}
+.wf-tag{font-size:11px;font-weight:700;color:#222;padding:3px 8px;border:1px solid #bbb;border-radius:8px}
+.app-mock{display:flex;min-height:480px;background:#fafafa}
+.mock-sidebar{width:260px;background:#f3f3f3;border-right:1px solid #ccc;display:flex;flex-direction:column}
+.sb-brand{padding:18px 20px;font-size:14px;font-weight:700;color:#111;border-bottom:1px solid #ccc}
+.sb-brand small{display:block;font-size:11px;font-weight:400;color:#555;margin-top:4px}
+.sb-nav{flex:1;padding:10px 0}
+.sb-link,.sb-group-header,.sb-sub{display:flex;align-items:center;padding:12px 18px;color:#222;font-size:13px;border-left:3px solid transparent}
+.sb-link{cursor:default}
+.sb-link.active,.sb-group-header.open{background:#fff;border-left-color:#111}
+.sb-sub{padding-left:38px;color:#555}
+.sb-sub.active{background:#fff;color:#111;border-left-color:#666}
+.sb-logout{padding:14px 18px;border-top:1px solid #ccc}
+.sb-logout span{display:block;text-align:center;padding:10px;border:1px solid #ccc;border-radius:8px;color:#111}
+.mock-main{flex:1;padding:24px;background:#fff;overflow:auto}
+.card{background:#fafafa;padding:20px;border:1px solid #ddd;border-radius:12px;margin-bottom:18px}
+.card h2{font-size:18px;font-weight:700;margin-bottom:16px}
+.form-row{display:flex;gap:12px;margin-bottom:14px}
+.form-row > div{flex:1}
+label{display:block;font-size:13px;font-weight:700;margin-bottom:6px;color:#222}
+.form-input{width:100%;padding:11px 12px;font-size:14px;border:1px solid #ccc;border-radius:8px;background:#fff;color:#111}
+.form-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.btn{display:inline-block;padding:10px 16px;border-radius:8px;border:1px solid #111;background:#fff;color:#111;font-size:14px;font-weight:600}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;margin-top:12px}
+th,td{padding:10px 12px;border:1px solid #ddd;text-align:left}
+th{background:#f3f3f3;font-weight:700}
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:16px}
+.menu-item{border:1px solid #ccc;border-radius:10px;padding:14px;background:#fff}
+.menu-item .mname{font-weight:700;margin-bottom:6px}
+.menu-item .mmeta{font-size:13px;color:#555}
+.cart-row{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;padding:10px;border:1px solid #ddd;border-radius:10px;background:#fff;margin-bottom:8px}
+.cart-total{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border:1px solid #ccc;border-radius:10px;background:#f7f7f7;font-weight:700}
+</style>
+</head>
+<body>
+
+<div id="toc">
+  <strong>Wireframe</strong>
+  <a href="#wf-login">Login</a>
+  <a href="#wf-dashboard">Dashboard</a>
+  <a href="#wf-menu">Menu</a>
+  <a href="#wf-varian">Varian</a>
+  <a href="#wf-resep">Resep</a>
+  <a href="#wf-transaksi">Transaksi</a>
+  <a href="#wf-stok">Stok</a>
+</div>
+
+<div class="wf-section" id="wf-login">
+  <div class="wf-group-label">Login</div>
+  <div class="wf-card">
+    <div class="wf-browser-bar">
+      <span class="wf-dot"></span><span class="wf-dot"></span><span class="wf-dot"></span>
+      <span class="wf-url">localhost/WebRetailMinuman/auth/login.php</span>
+      <span class="wf-tag">LOGIN</span>
+    </div>
+    <div class="card" style="margin:20px;max-width:420px;">
+      <h2>Masuk</h2>
+      <div class="form-group"><label>Username</label><input class="form-input" type="text" placeholder="Masukkan username" /></div>
+      <div class="form-group"><label>Password</label><input class="form-input" type="password" placeholder="Masukkan password" /></div>
+      <div class="form-actions"><button class="btn">Masuk</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="wf-section" id="wf-dashboard">
+  <div class="wf-group-label">Dashboard</div>
+  <div class="wf-card">
+    <div class="wf-browser-bar">
+      <span class="wf-dot"></span><span class="wf-dot"></span><span class="wf-dot"></span>
+      <span class="wf-url">localhost/WebRetailMinuman/dashboard/dashboard.php</span>
+      <span class="wf-tag">DASHBOARD</span>
+    </div>
+    <div class="app-mock">
+      <div class="mock-sidebar">
+        <div class="sb-brand">Sistem Restoran<small>Admin</small></div>
+        <div class="sb-nav">
+          <div class="sb-link active">Dashboard</div>
+          <div class="sb-group-header open">Menu</div>
+          <div class="sb-sublinks"><div class="sb-sub">Menu</div><div class="sb-sub">Varian Menu</div></div>
+          <div class="sb-group-header">Resep</div>
+          <div class="sb-group-header">Stok</div>
+          <div class="sb-group-header">Transaksi</div>
+          <div class="sb-link">Voucher</div>
+          <div class="sb-link">Metode Pembayaran</div>
+          <div class="sb-link">Karyawan</div>
+        </div>
+        <div class="sb-logout"><span>Logout</span></div>
+      </div>
+      <main class="mock-main">
+        <div class="card"><h2>Ringkasan</h2><div class="table-wrap"><table><tr><th>Label</th><th>Nilai</th></tr><tr><td>Total Transaksi</td><td>120</td></tr><tr><td>Menu Terlaris</td><td>Teh Poci</td></tr></table></div></div>
+      </main>
+    </div>
+  </div>
+</div>
+
+<div class="wf-section" id="wf-menu">
+  <div class="wf-group-label">Menu</div>
+  <div class="wf-card">
+    <div class="wf-browser-bar">
+      <span class="wf-dot"></span><span class="wf-dot"></span><span class="wf-dot"></span>
+      <span class="wf-url">localhost/WebRetailMinuman/modules/menu/menu_tambah.php</span>
+      <span class="wf-tag">MENU</span>
+    </div>
+    <div class="card">
+      <h2>Tambah Menu</h2>
+      <div class="form-row"><div><label>Nama Menu</label><input class="form-input" type="text" placeholder="Contoh: Teh Poci" /></div><div><label>Kategori</label><input class="form-input" type="text" placeholder="Contoh: Minuman" /></div></div>
+      <div class="form-actions"><button class="btn">Simpan</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="wf-section" id="wf-varian">
+  <div class="wf-group-label">Varian Menu</div>
+  <div class="wf-card">
+    <div class="wf-browser-bar">
+      <span class="wf-dot"></span><span class="wf-dot"></span><span class="wf-dot"></span>
+      <span class="wf-url">localhost/WebRetailMinuman/modules/varian_menu/...</span>
+      <span class="wf-tag">VARIAN</span>
+    </div>
+    <div class="card">
+      <h2>Tambah Varian Menu</h2>
+      <div class="form-row"><div><label>Menu</label><input class="form-input" type="text" placeholder="Pilih menu" /></div><div><label>Ukuran</label><input class="form-input" type="text" placeholder="Contoh: Besar" /></div></div>
+      <div class="form-row"><div><label>Harga</label><input class="form-input" type="text" placeholder="Rp" /></div><div></div></div>
+      <div class="form-actions"><button class="btn">Simpan</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="wf-section" id="wf-resep">
+  <div class="wf-group-label">Resep</div>
+  <div class="wf-card">
+    <div class="wf-browser-bar">
+      <span class="wf-dot"></span><span class="wf-dot"></span><span class="wf-dot"></span>
+      <span class="wf-url">localhost/WebRetailMinuman/modules/resep/resep_tambah.php</span>
+      <span class="wf-tag">RESEP</span>
+    </div>
+    <div class="card">
+      <h2>Tambah Resep</h2>
+      <div class="form-row"><div><label>Menu</label><input class="form-input" type="text" placeholder="Pilih menu" /></div><div><label>Resep</label><input class="form-input" type="text" placeholder="Nama resep" /></div></div>
+      <div class="form-actions"><button class="btn">Simpan</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="wf-section" id="wf-transaksi">
+  <div class="wf-group-label">Transaksi</div>
+  <div class="wf-card">
+    <div class="wf-browser-bar">
+      <span class="wf-dot"></span><span class="wf-dot"></span><span class="wf-dot"></span>
+      <span class="wf-url">localhost/WebRetailMinuman/modules/transaksi/transaksi_tambah.php</span>
+      <span class="wf-tag">TRANSAKSI</span>
+    </div>
+    <div class="card">
+      <h2>Tambah Transaksi</h2>
+      <div class="menu-grid">
+        <div class="menu-item"><div class="mname">Teh Poci</div><div class="mmeta">Rp 12.000</div></div>
+        <div class="menu-item"><div class="mname">Kopi</div><div class="mmeta">Rp 15.000</div></div>
+        <div class="menu-item"><div class="mname">Nasi Goreng</div><div class="mmeta">Rp 20.000</div></div>
+      </div>
+      <div class="card" style="margin-top:18px;padding:16px;">
+        <h2>Keranjang</h2>
+        <div class="cart-row"><div>Menu</div><div>Qty</div><div>Harga</div><div></div></div>
+        <div class="cart-row"><div>Teh Poci</div><div>1</div><div>Rp 12.000</div><div>-</div></div>
+        <div class="cart-total"><span>Total</span><span>Rp 12.000</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wf-section" id="wf-stok">
+  <div class="wf-group-label">Stok</div>
+  <div class="wf-card">
+    <div class="wf-browser-bar">
+      <span class="wf-dot"></span><span class="wf-dot"></span><span class="wf-dot"></span>
+      <span class="wf-url">localhost/WebRetailMinuman/modules/stok/stok_list.php</span>
+      <span class="wf-tag">STOK</span>
+    </div>
+    <div class="card">
+      <h2>Daftar Stok</h2>
+      <div class="table-wrap"><table><thead><tr><th>Bahan</th><th>Stok</th><th>Min</th></tr></thead><tbody><tr><td>Teh</td><td>10</td><td>5</td></tr><tr><td>Gula</td><td>8</td><td>3</td></tr></tbody></table></div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
